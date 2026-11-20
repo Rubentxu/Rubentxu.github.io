@@ -1,0 +1,1206 @@
+{
+  "name": "nextdraw",
+  "version": "v0.6.29",
+  "revision": "v0.6.29-901-g329b01c",
+  "commit": "329b01c715a65e02ee919b2c176a8a8723f4fcdd",
+  "dirty": false,
+  "license": "MIT",
+  "toolchain": {
+    "name": "nextdraw-wasm",
+    "packageVersion": "0.6.29",
+    "wasmBindgenCli": "wasm-bindgen 0.2.129",
+    "wasmOpt": "wasm-opt version 132 (version_132)",
+    "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+    "target": "wasm32-unknown-unknown",
+    "profile": "release",
+    "rawWasmSha256": "4d0bbb16ed7ad9abd463313e0db122340935aa4c59e827f4243ebbf2224f6281",
+    "boundWasmSha256": "36449a9767700b0764d93ba6d2dcef14fe7af9320647b128148d6b3bc6ea4214",
+    "unoptimisedWasmSha256": "4385a80e577954eb803898f4c9f5cae5c43e488ee6912dc08bcdb9de5d9019fc",
+    "bytes": "2089040",
+    "clientFiles": [
+      "client/agent-tools.mjs",
+      "client/app-mount.mjs",
+      "client/arrow-style.mjs",
+      "client/autosave.mjs",
+      "client/binding-hint.mjs",
+      "client/boot.mjs",
+      "client/bound-text.mjs",
+      "client/canvas-input-wiring.mjs",
+      "client/canvas-menu.mjs",
+      "client/canvas-rect.mjs",
+      "client/chart-data.mjs",
+      "client/chart-dialog.mjs",
+      "client/chart-elements.mjs",
+      "client/chart-layout.mjs",
+      "client/chart-measure.mjs",
+      "client/chrome-icons.mjs",
+      "client/chrome-tokens.mjs",
+      "client/chrome.mjs",
+      "client/clear-canvas-dialog.mjs",
+      "client/clipboard-use.mjs",
+      "client/clipboard.mjs",
+      "client/collab-page.mjs",
+      "client/collab.mjs",
+      "client/colour-picker.mjs",
+      "client/commands.mjs",
+      "client/context-menu.mjs",
+      "client/create-app.mjs",
+      "client/crop-mode.mjs",
+      "client/crop-region.mjs",
+      "client/cursor-for.mjs",
+      "client/dark-colour.mjs",
+      "client/document-io-wiring.mjs",
+      "client/document-io.mjs",
+      "client/draft.mjs",
+      "client/drop-files.mjs",
+      "client/drop-overlay.mjs",
+      "client/embed-page.mjs",
+      "client/embeddable-overlay.mjs",
+      "client/embeddable-url.mjs",
+      "client/export-dialog.mjs",
+      "client/export.mjs",
+      "client/focus.mjs",
+      "client/fonts/assistant-0.woff2",
+      "client/fonts/cascadia-0.woff2",
+      "client/fonts/comic-shanns-0.woff2",
+      "client/fonts/comic-shanns-1.woff2",
+      "client/fonts/comic-shanns-2.woff2",
+      "client/fonts/comic-shanns-3.woff2",
+      "client/fonts/excalifont-0.woff2",
+      "client/fonts/excalifont-1.woff2",
+      "client/fonts/excalifont-2.woff2",
+      "client/fonts/excalifont-3.woff2",
+      "client/fonts/excalifont-4.woff2",
+      "client/fonts/excalifont-5.woff2",
+      "client/fonts/excalifont-6.woff2",
+      "client/fonts/fonts.css",
+      "client/fonts/liberation-0.woff2",
+      "client/fonts/lilita-0.woff2",
+      "client/fonts/lilita-1.woff2",
+      "client/fonts/nunito-0.woff2",
+      "client/fonts/nunito-1.woff2",
+      "client/fonts/nunito-2.woff2",
+      "client/fonts/nunito-3.woff2",
+      "client/fonts/nunito-4.woff2",
+      "client/fonts/virgil-0.woff2",
+      "client/footer.mjs",
+      "client/frame.mjs",
+      "client/gesture-pipeline.mjs",
+      "client/gesture-stream.mjs",
+      "client/gesture.mjs",
+      "client/gestures/crop.mjs",
+      "client/gestures/draw.mjs",
+      "client/gestures/eraser.mjs",
+      "client/gestures/freedraw.mjs",
+      "client/gestures/laser.mjs",
+      "client/gestures/marquee.mjs",
+      "client/gestures/midpoint.mjs",
+      "client/gestures/pan.mjs",
+      "client/gestures/pinch.mjs",
+      "client/gestures/resize.mjs",
+      "client/gestures/rotate.mjs",
+      "client/gestures/segment.mjs",
+      "client/gestures/translate.mjs",
+      "client/gestures/vertex.mjs",
+      "client/handoff.mjs",
+      "client/help.mjs",
+      "client/history-toolbar.mjs",
+      "client/history.mjs",
+      "client/i18n.mjs",
+      "client/icons/apple-touch-icon.png",
+      "client/icons/favicon-16.png",
+      "client/icons/favicon-32.png",
+      "client/icons/icon-192.png",
+      "client/icons/icon-512.png",
+      "client/icons/icon-maskable-192.png",
+      "client/icons/icon-maskable-512.png",
+      "client/icons/logo.svg",
+      "client/idle.mjs",
+      "client/image-files.mjs",
+      "client/image-import.mjs",
+      "client/image-keeper.mjs",
+      "client/image-store.mjs",
+      "client/index.js",
+      "client/key-scope.mjs",
+      "client/keys.mjs",
+      "client/laser.mjs",
+      "client/library-clipboard.mjs",
+      "client/library-drop.mjs",
+      "client/library-file.mjs",
+      "client/library-panel.mjs",
+      "client/library-store.mjs",
+      "client/lifecycle.mjs",
+      "client/link-dialog.mjs",
+      "client/link-popup.mjs",
+      "client/locales.mjs",
+      "client/mermaid-elements.mjs",
+      "client/mermaid.mjs",
+      "client/mode-notices.mjs",
+      "client/multipoint.mjs",
+      "client/navigation.mjs",
+      "client/offline.mjs",
+      "client/paint-frame.mjs",
+      "client/paint.mjs",
+      "client/palette.mjs",
+      "client/pan.mjs",
+      "client/panic.mjs",
+      "client/pen-mode.mjs",
+      "client/pen.mjs",
+      "client/persist-request.mjs",
+      "client/persist-wiring.mjs",
+      "client/persist.mjs",
+      "client/pinch-frame.mjs",
+      "client/pinch.mjs",
+      "client/png-scene.mjs",
+      "client/presence.mjs",
+      "client/presentation.mjs",
+      "client/recovery.mjs",
+      "client/render-wiring.mjs",
+      "client/room-key.mjs",
+      "client/room-wiring.mjs",
+      "client/run-command.mjs",
+      "client/semantic-announcer.mjs",
+      "client/semantic-description.mjs",
+      "client/semantic-explorer.mjs",
+      "client/semantic-facade.mjs",
+      "client/semantic-snapshot.mjs",
+      "client/semantic-text-export.mjs",
+      "client/shape-switch.mjs",
+      "client/static-layer.mjs",
+      "client/stats-panel.mjs",
+      "client/status.mjs",
+      "client/sticky-note-footer.mjs",
+      "client/storage.mjs",
+      "client/style-icons.mjs",
+      "client/style-panel.mjs",
+      "client/style-toolbar.mjs",
+      "client/svg-fonts.mjs",
+      "client/tab-conflict-dialog.mjs",
+      "client/tab-watch.mjs",
+      "client/text-edit.mjs",
+      "client/text-editor-wiring.mjs",
+      "client/text-style.mjs",
+      "client/theme-boot.js",
+      "client/theme.mjs",
+      "client/tool-lock.mjs",
+      "client/tool-toolbar.mjs",
+      "client/tools.mjs",
+      "client/transform-preview.mjs",
+      "client/ui-bindings.mjs",
+      "client/ui-state.mjs",
+      "client/update-wiring.mjs",
+      "client/update.mjs",
+      "client/vertex-edit.mjs",
+      "client/vocabulary.mjs",
+      "client/webmcp-adapter.mjs",
+      "client/welcome-screen.mjs",
+      "client/wire.mjs",
+      "client/zoom-toolbar.mjs",
+      "client/zoom.mjs"
+    ],
+    "buildSha256": "6f03ef277f63d20daac2fce20d4fceac1dff573814848a305124f73a42399756"
+  },
+  "provenance": {
+    "commit": "3af1251b9ece343a786b8d1ee0a8268ee0538025",
+    "dirty": true,
+    "inputsDigest": "08fdaaba9700523d124d26de67660f39a041807aaec86e48872de2dbca5e4399",
+    "inputsCount": 185
+  },
+  "files": [
+    {
+      "path": "LICENSE",
+      "bytes": 1073,
+      "sha256": "1279a68070906fc9aa3c544ac4b10d90a4d7b4e113b710e8fd8d2e498843972a"
+    },
+    {
+      "path": "MANUAL.md",
+      "bytes": 10922,
+      "sha256": "3faa612834e92e262914e992360e549b625656a5bb0f80c3b040aa1d5198712e"
+    },
+    {
+      "path": "NOTICE",
+      "bytes": 5548,
+      "sha256": "fa3c6c6b7ae3ea22dd2c14c1337fa3ecab8f80c19096ac7e8788139513e7703a"
+    },
+    {
+      "path": "VERSION",
+      "bytes": 8,
+      "sha256": "c703065f4104363a3618f11f7114018de693750ace0fdafbe796ee7f5bc38756"
+    },
+    {
+      "path": "captures/editor.png",
+      "bytes": 174610,
+      "sha256": "3552ab2397307b8f9ec22ded3a07258f6744f757ba7b51d7f82925f096c89080"
+    },
+    {
+      "path": "captures/help.png",
+      "bytes": 307089,
+      "sha256": "f6f5f331fb2c05c0cf0f2da861702c565cac99b718b0690fb27cd27ea2e5b7f1"
+    },
+    {
+      "path": "captures/palette.png",
+      "bytes": 190781,
+      "sha256": "110196d42e6e1b91f6cc92e2a74e69c8e84ac91b74edd9e112855f6c6c497c8f"
+    },
+    {
+      "path": "client/agent-tools.mjs",
+      "bytes": 2629,
+      "sha256": "f3d28c873a05f2ff3b92e8a894386e6bc6e6456a21fcf50626173710e6fe1fc3"
+    },
+    {
+      "path": "client/app-mount.mjs",
+      "bytes": 3806,
+      "sha256": "f2147a4387ad0df0c4a7fe01b99eb0ce13be46dc71cd3c6d585bb9163a433f7e"
+    },
+    {
+      "path": "client/arrow-style.mjs",
+      "bytes": 5243,
+      "sha256": "751da0de42783dcde035339a96f9171d4641ab295cfb7d1b7f4f92535badf238"
+    },
+    {
+      "path": "client/autosave.mjs",
+      "bytes": 11856,
+      "sha256": "22345ce3e2668f8984138ff285072cb060066804007994a4af1bd1df779d659b"
+    },
+    {
+      "path": "client/binding-hint.mjs",
+      "bytes": 3139,
+      "sha256": "b6bb3146c4fee39e6550d66a0c0cf78a5ba95886ca702061053a7a28bf037773"
+    },
+    {
+      "path": "client/boot.mjs",
+      "bytes": 19241,
+      "sha256": "dfbab2e38ec558a1996d5212de51fd6167e5f5f7a71ec099fe1ab6baa394d11e"
+    },
+    {
+      "path": "client/bound-text.mjs",
+      "bytes": 3822,
+      "sha256": "f6e26caf4c02374376ccdd848a92fe3ff658db8bae1de7b60367adf86a191281"
+    },
+    {
+      "path": "client/canvas-input-wiring.mjs",
+      "bytes": 13932,
+      "sha256": "7bfdda75477f2401e2eacfc30c2016236d245c543678be0a8dcdbebb78b138ea"
+    },
+    {
+      "path": "client/canvas-menu.mjs",
+      "bytes": 27347,
+      "sha256": "8b1b0f6c2ece52cbe1cab9749011d2bbcada2a41c8cde1fefad6f35cd8977813"
+    },
+    {
+      "path": "client/canvas-rect.mjs",
+      "bytes": 3903,
+      "sha256": "17f319de3b9c395c4240242d2fca8fd5ce6f3176789bcb7339d6875789b828c3"
+    },
+    {
+      "path": "client/chart-data.mjs",
+      "bytes": 7890,
+      "sha256": "32db86f0ce1a90fc0c9e78d12501b57e5edd82ea7a0ae30d5f065621a4ebe043"
+    },
+    {
+      "path": "client/chart-dialog.mjs",
+      "bytes": 3965,
+      "sha256": "1200754f75869a34522f72586f03775402a68950b54d7bd094ca368d936265c5"
+    },
+    {
+      "path": "client/chart-elements.mjs",
+      "bytes": 3850,
+      "sha256": "466d14145b5c0938159e58547bb5490e3fcd9bfeb9b770ed94cf016af995852f"
+    },
+    {
+      "path": "client/chart-layout.mjs",
+      "bytes": 42755,
+      "sha256": "6c0f036408bc090e45f83ab025894318669277f3ca1dcebae3f0ab21c47ec486"
+    },
+    {
+      "path": "client/chart-measure.mjs",
+      "bytes": 4997,
+      "sha256": "0abe390235413291c0c0733f87b623aeeacb8afb850ef6cc76f75691552d5017"
+    },
+    {
+      "path": "client/chrome-icons.mjs",
+      "bytes": 137894,
+      "sha256": "fe819159cc47e791be837b57309e45614ce2570d9b5c63e1757df820f920ad38"
+    },
+    {
+      "path": "client/chrome-tokens.mjs",
+      "bytes": 5588,
+      "sha256": "da8f4c60e145696e42324871cdb468658809dc495e62fe72b49c1545d2edffa0"
+    },
+    {
+      "path": "client/chrome.mjs",
+      "bytes": 17195,
+      "sha256": "f38575879e53d9dd706e6677538eb3fcbb00cb1013246205d0554ec8d55ed972"
+    },
+    {
+      "path": "client/clear-canvas-dialog.mjs",
+      "bytes": 3302,
+      "sha256": "cb0ab729e07a4e824b7a985c5e36acc2c009fb8580a11711d9de375c70c62b45"
+    },
+    {
+      "path": "client/clipboard-use.mjs",
+      "bytes": 16634,
+      "sha256": "e4da8bbbe37c3d40d519154edd12c8e124982dcc375eb61fb17e22d94fb9e5ff"
+    },
+    {
+      "path": "client/clipboard.mjs",
+      "bytes": 6978,
+      "sha256": "b1064270661e8dd5df0c03a727bf36408bd5c74aad409567e728df4e239cf9a4"
+    },
+    {
+      "path": "client/collab-page.mjs",
+      "bytes": 2828,
+      "sha256": "eaa8762f7fc9b8e7cf1ddd577d982c56cc64fe5e4852d9e94724069402c2e529"
+    },
+    {
+      "path": "client/collab.mjs",
+      "bytes": 20066,
+      "sha256": "ee9e5172f8345caaa0bb4a24326bc5a937a17bef21e00e018b842fab59d702a1"
+    },
+    {
+      "path": "client/colour-picker.mjs",
+      "bytes": 8345,
+      "sha256": "7b7b7548dbeb3b8b2146907c9f5ebd915bdc4d80517392750c9b6c16dc27cb6e"
+    },
+    {
+      "path": "client/commands.mjs",
+      "bytes": 58064,
+      "sha256": "43edf79640f8ef26cc7c5a5b2eac02d580d3af8c17e55ddecf1468c723e7bd21"
+    },
+    {
+      "path": "client/context-menu.mjs",
+      "bytes": 15104,
+      "sha256": "84d504a3db9acddcebcc6c5378d087d2488cdce670da290603ac6412c1b877fc"
+    },
+    {
+      "path": "client/create-app.mjs",
+      "bytes": 22216,
+      "sha256": "2bc8e0f2459690649d27f03b01c69192941e38ed75dad9a93f9db0533962d979"
+    },
+    {
+      "path": "client/crop-mode.mjs",
+      "bytes": 4531,
+      "sha256": "7dee524dcf1fbe56d498f5eff6e2b30832923245c2644bc7246ed49a4138f22e"
+    },
+    {
+      "path": "client/crop-region.mjs",
+      "bytes": 3663,
+      "sha256": "b44b32be324d920793f004e94bbab8e213ed0290d22e3b3d759135da836f1da7"
+    },
+    {
+      "path": "client/cursor-for.mjs",
+      "bytes": 11539,
+      "sha256": "555f98a0d468d9f207014c54a4bc49590fc7b163488593161d73682b698c3a13"
+    },
+    {
+      "path": "client/dark-colour.mjs",
+      "bytes": 8784,
+      "sha256": "bc6eb2c3d95f4ec84fcde565a7ad5580b96906d67ce03241e8c34bf5a3679fd8"
+    },
+    {
+      "path": "client/document-io-wiring.mjs",
+      "bytes": 22326,
+      "sha256": "8ea50b4d3d5ef0405646eac658eebf95f1dfd92c68f5ef4b01c1d7dc53863bf4"
+    },
+    {
+      "path": "client/document-io.mjs",
+      "bytes": 13015,
+      "sha256": "abca1aa35095a8014bccaf025ef18daa56898859e2dc819bf96103018c63d53b"
+    },
+    {
+      "path": "client/draft.mjs",
+      "bytes": 2422,
+      "sha256": "31b6d76832ae984cd476651d98e1dbe16e0693d3528f4c57f151c647e4dbd83f"
+    },
+    {
+      "path": "client/drop-files.mjs",
+      "bytes": 3442,
+      "sha256": "76330c7d7c69362f320a5a40d892e9b04b373f06fbc7697e922687807f018a05"
+    },
+    {
+      "path": "client/drop-overlay.mjs",
+      "bytes": 10509,
+      "sha256": "f64fc9a273abc066008be95c1c1fa37c06df9945f8030923fedad65fe0186914"
+    },
+    {
+      "path": "client/embed-page.mjs",
+      "bytes": 1882,
+      "sha256": "4eb9911f97f804ce9cd3325e4a517996a53156d8c83ecebbde3e2d93e0e9c83b"
+    },
+    {
+      "path": "client/embeddable-overlay.mjs",
+      "bytes": 5356,
+      "sha256": "22a55ba6650189b9fbabf75adbd102747044a7c93270ed1c743df45062ec519b"
+    },
+    {
+      "path": "client/embeddable-url.mjs",
+      "bytes": 12163,
+      "sha256": "826570c8b2bdcd03b21f7559927c13d0578d06fc8853ebd4f410d11fba56451a"
+    },
+    {
+      "path": "client/export-dialog.mjs",
+      "bytes": 8201,
+      "sha256": "d65ff04b6d2fdf902d340aea550e753a2889a2ca5c697ff76ca49468b781ac5f"
+    },
+    {
+      "path": "client/export.mjs",
+      "bytes": 15663,
+      "sha256": "cc4d7c67bfdfb377f95cf3f72d895feb6e94fa2e2582ba686c81be3cdb048da4"
+    },
+    {
+      "path": "client/focus.mjs",
+      "bytes": 1815,
+      "sha256": "3b3ce770ed9122c25cdba9d0154bc5511cd0cab3c39efb3dccbc98b28e6de25e"
+    },
+    {
+      "path": "client/fonts/assistant-0.woff2",
+      "bytes": 20232,
+      "sha256": "76945f09225aae65bdbd204cb4ac40d4caa4ff67150e5074bab1a04d1b778fc3"
+    },
+    {
+      "path": "client/fonts/cascadia-0.woff2",
+      "bytes": 65732,
+      "sha256": "5bce041e0fcce617e35efbc335b1372d27a84acb65fb464c65ff80ab3424a885"
+    },
+    {
+      "path": "client/fonts/comic-shanns-0.woff2",
+      "bytes": 17488,
+      "sha256": "fa930fceb529a4b51ba3055d590302722c27704f6a6357495873950136b1e2ea"
+    },
+    {
+      "path": "client/fonts/comic-shanns-1.woff2",
+      "bytes": 9856,
+      "sha256": "ee641c2e35730c3e6e3826855f1b6cc3b343a017c3e216e4e4a2e47010c53ad1"
+    },
+    {
+      "path": "client/fonts/comic-shanns-2.woff2",
+      "bytes": 2816,
+      "sha256": "61c376d32e1773588f6163599aed24fe0387b5a5cb622bd200455f20c2b36a87"
+    },
+    {
+      "path": "client/fonts/comic-shanns-3.woff2",
+      "bytes": 1292,
+      "sha256": "782f24081b810b8de9f04da055007ce4f1445c18abbf096c831f8888d65935c1"
+    },
+    {
+      "path": "client/fonts/excalifont-0.woff2",
+      "bytes": 24956,
+      "sha256": "e4423b318e11432aff2e6e865e300b7ca270f92321a3f56632268fede01c1b48"
+    },
+    {
+      "path": "client/fonts/excalifont-1.woff2",
+      "bytes": 12220,
+      "sha256": "4fb8ad69be9aeac5664d99e5aa3a68a27ea40c98943b80387f7cd55c034fcc93"
+    },
+    {
+      "path": "client/fonts/excalifont-2.woff2",
+      "bytes": 2104,
+      "sha256": "18ea9be1dd6b5a67b057f44eba8e34cb290f88308c272bcf35c79c1a220d0d7b"
+    },
+    {
+      "path": "client/fonts/excalifont-3.woff2",
+      "bytes": 824,
+      "sha256": "b004007be100261e58188cf8a0f7e850e997702f35d57110915995cd880e49f1"
+    },
+    {
+      "path": "client/fonts/excalifont-4.woff2",
+      "bytes": 8712,
+      "sha256": "c96649a5f96e2faa9143ee94e5b590b5afb08092f8d67c67f09cef332d66e4a7"
+    },
+    {
+      "path": "client/fonts/excalifont-5.woff2",
+      "bytes": 13296,
+      "sha256": "b424d16da4398be3e9852857a54ff70e043c8e2ec5c4444dbf7f88d7469b9859"
+    },
+    {
+      "path": "client/fonts/excalifont-6.woff2",
+      "bytes": 2656,
+      "sha256": "a0637cff365c7344d2f7a15905a1f74dceaf56b5ac2ff913d150358bed6921f0"
+    },
+    {
+      "path": "client/fonts/fonts.css",
+      "bytes": 10487,
+      "sha256": "d42607306a1729cadd9507fb1acd9939d5167a5b552f2651bc2d6c28d3a14058"
+    },
+    {
+      "path": "client/fonts/liberation-0.woff2",
+      "bytes": 70668,
+      "sha256": "006a2b28cbbeeaec937d1b367d0949f5f48ef4b2e7b4e1d8dc7a799d2d639be8"
+    },
+    {
+      "path": "client/fonts/lilita-0.woff2",
+      "bytes": 10676,
+      "sha256": "8d6cd0f298738a92ca9bf6e13f54a9191afd06ce04ea00ebbf24499c017191b7"
+    },
+    {
+      "path": "client/fonts/lilita-1.woff2",
+      "bytes": 1416,
+      "sha256": "2b6568c7a0f16300bc6c8d292bd426c361fcdb40699c2cbfab2bd3e9e6993dea"
+    },
+    {
+      "path": "client/fonts/nunito-0.woff2",
+      "bytes": 16476,
+      "sha256": "6d1626aac658786e37e78e0adce3ffffddbd75abc923d72e45a7168bd80053da"
+    },
+    {
+      "path": "client/fonts/nunito-1.woff2",
+      "bytes": 15476,
+      "sha256": "7928f47b21192cb6fdb2f46b71a474a3bd2fd608945c5ad7d7ed6bde8b0ae24c"
+    },
+    {
+      "path": "client/fonts/nunito-2.woff2",
+      "bytes": 11104,
+      "sha256": "3e7f76fcc8798b8bba4d6bcc06bdb0d788f6e89706c1d6e64ac81d65ca683c14"
+    },
+    {
+      "path": "client/fonts/nunito-3.woff2",
+      "bytes": 6116,
+      "sha256": "5117398298dd0dba3c95a406ff12fbeb88289fa4e913e3a5cf482cafe7f7071a"
+    },
+    {
+      "path": "client/fonts/nunito-4.woff2",
+      "bytes": 8392,
+      "sha256": "e512f2d7c9fe062b1acf8f6ea64d4bfd89a77d26728150977627e445c7b6e937"
+    },
+    {
+      "path": "client/fonts/virgil-0.woff2",
+      "bytes": 56156,
+      "sha256": "2279cf7daf1c42a3a53b2c1437ad72f0050efb67ac263e0245f67612fd766714"
+    },
+    {
+      "path": "client/footer.mjs",
+      "bytes": 5952,
+      "sha256": "c169e245c4f9c1668bc22a2ed2a0461fdf979737ef19948fa3501a27f00a85ed"
+    },
+    {
+      "path": "client/frame.mjs",
+      "bytes": 9552,
+      "sha256": "0888b3b8e678f49b8c0a0e8655dda6781ca86098381a56651bf24a62142a6c78"
+    },
+    {
+      "path": "client/gesture-pipeline.mjs",
+      "bytes": 126837,
+      "sha256": "5bcb1c7934e126310eb434c39ab5445e0005cf9deba2a9662d2ffb8c632ee40e"
+    },
+    {
+      "path": "client/gesture-stream.mjs",
+      "bytes": 4929,
+      "sha256": "033b95a61fe67a5d2c2c608b14cfde16249ccd3bb27bd7cf7198651ceff966de"
+    },
+    {
+      "path": "client/gesture.mjs",
+      "bytes": 15714,
+      "sha256": "619bf53f5f6f9aa307bb65a9542be6b4a98fad96ee3900604833d20cba210c48"
+    },
+    {
+      "path": "client/gestures/crop.mjs",
+      "bytes": 6026,
+      "sha256": "960ab62d246a86295769b121ad221e4656c7f10bc75c3bd55331304ebd0b023c"
+    },
+    {
+      "path": "client/gestures/draw.mjs",
+      "bytes": 10818,
+      "sha256": "767095a3c667891c8547fa05bc5f6d16774faff10afadbb153831a6df4b8832d"
+    },
+    {
+      "path": "client/gestures/eraser.mjs",
+      "bytes": 2991,
+      "sha256": "84dbfd45abf4880911aa027d469ee50853d5885826ec54501066dfed4d9949c0"
+    },
+    {
+      "path": "client/gestures/freedraw.mjs",
+      "bytes": 11769,
+      "sha256": "20eaa4d8979d8262fcdbe27d69f28bf7f2bda931b84f6eefaa6ea7d9d9a84876"
+    },
+    {
+      "path": "client/gestures/laser.mjs",
+      "bytes": 2823,
+      "sha256": "e66dd394ebe7f36dfaadc4058a2dd9d318edd79395fe0351aec23c154e895fa7"
+    },
+    {
+      "path": "client/gestures/marquee.mjs",
+      "bytes": 6223,
+      "sha256": "9ce6b57b761f05afb8f33a08cdf1970f3e23986396c4a3fb8d1488c9a9389f65"
+    },
+    {
+      "path": "client/gestures/midpoint.mjs",
+      "bytes": 4169,
+      "sha256": "63bc85f1f1864b079b55a7947768850e2c6534ad5b530d5d4be0b8712c6693bc"
+    },
+    {
+      "path": "client/gestures/pan.mjs",
+      "bytes": 2119,
+      "sha256": "ceffb38acd3b243c3f5457d5bb0a9a30970a0a4010b0964b3e6332d82bd7d170"
+    },
+    {
+      "path": "client/gestures/pinch.mjs",
+      "bytes": 2462,
+      "sha256": "6edc9b1efd918b06d3424573839d6437f8cacc59bd9c96be5416621676e54d8d"
+    },
+    {
+      "path": "client/gestures/resize.mjs",
+      "bytes": 3857,
+      "sha256": "76f33dcd57cfb9a0adb41db51c5d5a1d8ab657bfb55915599d851148039a43a1"
+    },
+    {
+      "path": "client/gestures/rotate.mjs",
+      "bytes": 4433,
+      "sha256": "4ecac161f5d0e9619510f12f47411f176e0d4a8b310b3c8e48aebdf42fbdb4f2"
+    },
+    {
+      "path": "client/gestures/segment.mjs",
+      "bytes": 2693,
+      "sha256": "ba1216b88b408d5d16703146ed945ec7de6f51473fea99ef3f4e1e2e9ebd3113"
+    },
+    {
+      "path": "client/gestures/translate.mjs",
+      "bytes": 6719,
+      "sha256": "66a8254475bda012b137e204d4780da3abd3f9b9985421f589921b6e79f9317b"
+    },
+    {
+      "path": "client/gestures/vertex.mjs",
+      "bytes": 5512,
+      "sha256": "76f5fe67ab81e9763d1a77e583ce895ebd0284a6b804133da75c4e83f979ddbe"
+    },
+    {
+      "path": "client/handoff.mjs",
+      "bytes": 5741,
+      "sha256": "0d14673913ba53fb4743cccf1979825043fdaade4e906b395869e7d93cc33dfb"
+    },
+    {
+      "path": "client/help.mjs",
+      "bytes": 24948,
+      "sha256": "0ca6220823cc9d652dc3a337582b1fb4bac2b568987944dcd00dc50db894cb14"
+    },
+    {
+      "path": "client/history-toolbar.mjs",
+      "bytes": 5973,
+      "sha256": "9941f4529fc0b955e28f33edcb885781dbe1964a95a2e7b990eee6e0fa4b655c"
+    },
+    {
+      "path": "client/history.mjs",
+      "bytes": 2341,
+      "sha256": "2cc0aa64fc829cc6d2c6ab58076473cc541e59cb62358efe87f73c3f495801ca"
+    },
+    {
+      "path": "client/i18n.mjs",
+      "bytes": 17388,
+      "sha256": "81bd650aa24d680f60734f5be18b4abd4f4becd71df3adff78684c916ee5963d"
+    },
+    {
+      "path": "client/icons/apple-touch-icon.png",
+      "bytes": 2203,
+      "sha256": "73450e4efedddcade0c085f031fda2cdc9d86708e6e331373b41a0b05fb031eb"
+    },
+    {
+      "path": "client/icons/favicon-16.png",
+      "bytes": 305,
+      "sha256": "890459f2449771e0df4ec93e5e41a228306faf21032996289b616af6c9e634a7"
+    },
+    {
+      "path": "client/icons/favicon-32.png",
+      "bytes": 567,
+      "sha256": "a939d67c6e5ddcaa999082a88419332af7ee982cbbccce1c099aecaad8f91161"
+    },
+    {
+      "path": "client/icons/icon-192.png",
+      "bytes": 3354,
+      "sha256": "f097d092913e9eb26e8eb4fa22cd46f80a38fd7ef46015120ceccebe7d514c9e"
+    },
+    {
+      "path": "client/icons/icon-512.png",
+      "bytes": 10392,
+      "sha256": "baceb23a48046197ec1fdcdd8ff7bacf0ac188df4699c646864d82d2a1cca014"
+    },
+    {
+      "path": "client/icons/icon-maskable-192.png",
+      "bytes": 2327,
+      "sha256": "dc46d6fb71a6915cb829a92ba883beb9ce7af9f881f5fa01734ad28d56bbdeb0"
+    },
+    {
+      "path": "client/icons/icon-maskable-512.png",
+      "bytes": 6882,
+      "sha256": "5048425b3778b8ca2030396df6f286983b4941e3d3999e36dd6b9055636ecca9"
+    },
+    {
+      "path": "client/icons/logo.svg",
+      "bytes": 1159,
+      "sha256": "d5f726a8848bdaf7072186ebc28fdd6f612a44eff328918b5910e9d875b8be3a"
+    },
+    {
+      "path": "client/idle.mjs",
+      "bytes": 5193,
+      "sha256": "c17a4e09aa7c536a865c712f88523c0b11850a07bb3de0496fd4a801ad0242ec"
+    },
+    {
+      "path": "client/image-files.mjs",
+      "bytes": 4289,
+      "sha256": "42c0272581b7edab5c2af5464455549beec6365136009a5bb0023bc5aea683b4"
+    },
+    {
+      "path": "client/image-import.mjs",
+      "bytes": 13251,
+      "sha256": "8ec6303fc27c6468d78684d4fe27071a4ea5d1257711fff3166552014d96ee6b"
+    },
+    {
+      "path": "client/image-keeper.mjs",
+      "bytes": 4365,
+      "sha256": "631ea7fc929af1c555cd16230bd5564b81d96c17cdd07311951cda5bc8e22b2a"
+    },
+    {
+      "path": "client/image-store.mjs",
+      "bytes": 5841,
+      "sha256": "c0a2450954c67c7875a3b0ba51401178432bc9441b54e8cf993d406986924345"
+    },
+    {
+      "path": "client/index.js",
+      "bytes": 1018,
+      "sha256": "90b5f7c2706bf3e979768f42279d52e39e5b40eb6b565061e6c7061d40945edc"
+    },
+    {
+      "path": "client/key-scope.mjs",
+      "bytes": 3998,
+      "sha256": "7bde7f02374799a6d3f9285decbad39c964742fb827540091f3b8f35326ebb79"
+    },
+    {
+      "path": "client/keys.mjs",
+      "bytes": 10025,
+      "sha256": "49cdb2af3fa9eedc28607dc2e315aefe9466ed0c3d5addb7b836e50465f2e2c2"
+    },
+    {
+      "path": "client/laser.mjs",
+      "bytes": 5755,
+      "sha256": "fab63affb6a07314b29de1e63527ad111e021611cbcdb6a4e67cff263dc76332"
+    },
+    {
+      "path": "client/library-clipboard.mjs",
+      "bytes": 14509,
+      "sha256": "173c7756cb967c6c0c5ac250c41fbf33ca549213f26da032482c402b9846871a"
+    },
+    {
+      "path": "client/library-drop.mjs",
+      "bytes": 2701,
+      "sha256": "79945a6cfaa506c4c58007e80fe0a0a3798c7f821d2491034de88659c64466ae"
+    },
+    {
+      "path": "client/library-file.mjs",
+      "bytes": 4844,
+      "sha256": "95e70d46f8e85af90249bf9beab0c9006e7a229cb5ac57c7ce34a24d9428fd21"
+    },
+    {
+      "path": "client/library-panel.mjs",
+      "bytes": 16793,
+      "sha256": "9fb9bd18e534f03d82827a6703b9c5f9ab4df81b467bf72fa325447888ad8072"
+    },
+    {
+      "path": "client/library-store.mjs",
+      "bytes": 7124,
+      "sha256": "ed1b8eb7558b8198885186fac6151e2be1ffb912fd67731ade13a492de56cf5c"
+    },
+    {
+      "path": "client/lifecycle.mjs",
+      "bytes": 2406,
+      "sha256": "f0863279f1078dc0db510aab68d1ab24745dfb860018a98fb5b677596f9c71b0"
+    },
+    {
+      "path": "client/link-dialog.mjs",
+      "bytes": 5285,
+      "sha256": "f4162ee04da10a8c4e667b22e98f33a1f617f6c31067f53f5422b14aaac427b6"
+    },
+    {
+      "path": "client/link-popup.mjs",
+      "bytes": 3607,
+      "sha256": "74fcee8bf844b17f5ed1bcc028599e1f94e1bd35be0c814ccc3243e98a7851cc"
+    },
+    {
+      "path": "client/locales.mjs",
+      "bytes": 56749,
+      "sha256": "423a1014f489f174adb7b63dd9d1c8874d8c10bc37e7d5088773d68d7d4c2d1d"
+    },
+    {
+      "path": "client/mermaid-elements.mjs",
+      "bytes": 3864,
+      "sha256": "96d6b787159c9a7f969e2c45ebe34d6439111236fd13bce84c538e3c07f2c868"
+    },
+    {
+      "path": "client/mermaid.mjs",
+      "bytes": 13152,
+      "sha256": "2860ac454c8756a0fa54cb7e1cdd86c9f436ce754edf685008441fd4fde72604"
+    },
+    {
+      "path": "client/mode-notices.mjs",
+      "bytes": 2732,
+      "sha256": "5967059a163d157ca38ab0c88cfd46a94534857b37b9c78df90590936d9b4463"
+    },
+    {
+      "path": "client/multipoint.mjs",
+      "bytes": 10526,
+      "sha256": "2de38c9490cbe40fb67be8e863743651a98f62c1177891a71e283c5c37660fbf"
+    },
+    {
+      "path": "client/navigation.mjs",
+      "bytes": 4065,
+      "sha256": "4f40f21ae9550805f6bf1cfb878a648925d462d7056a7fa9af288b7dfedba0ce"
+    },
+    {
+      "path": "client/offline.mjs",
+      "bytes": 8319,
+      "sha256": "38cb510cd3fdc4800b1ee87f090a8f0de11a93c129e22a55a2aca183a0e4b2cb"
+    },
+    {
+      "path": "client/paint-frame.mjs",
+      "bytes": 29235,
+      "sha256": "a94e750a2d2760a8e8c1c3d4ee337dcaf76e1463c76574aafa773dd6ede01a91"
+    },
+    {
+      "path": "client/paint.mjs",
+      "bytes": 96231,
+      "sha256": "56a73ba3049a7dc38dfa12949a484ec5a607b6a179da7378619ba7de25a89028"
+    },
+    {
+      "path": "client/palette.mjs",
+      "bytes": 14979,
+      "sha256": "7264ac7006c5c4977e43e959b5ddfb55162193dcd0a5738da814a4fd193b5441"
+    },
+    {
+      "path": "client/pan.mjs",
+      "bytes": 5882,
+      "sha256": "ccaa8d07a449110e9450d07fd8caeaae7445df8fbc80a354223b8f1b65e1f4ba"
+    },
+    {
+      "path": "client/panic.mjs",
+      "bytes": 9248,
+      "sha256": "408ced43e5d71713647d86976ded9c9435db9dc506690a4c8874f3a4e5b931b8"
+    },
+    {
+      "path": "client/pen-mode.mjs",
+      "bytes": 1745,
+      "sha256": "3b731e2505473a3027c2ee19f116a2033ab84bab62251642832b4b14df957461"
+    },
+    {
+      "path": "client/pen.mjs",
+      "bytes": 5983,
+      "sha256": "caa1fc8b124189ace4fb315b5f8b8f1dae28c87ed4563b8d9cc04624df57a301"
+    },
+    {
+      "path": "client/persist-request.mjs",
+      "bytes": 2767,
+      "sha256": "c34991c64848eb709455cc94c0c8f16975a51bf27ac1c1c7f6e11b255c03dce4"
+    },
+    {
+      "path": "client/persist-wiring.mjs",
+      "bytes": 12755,
+      "sha256": "5e7bd937b97165937129c9c545586b0f9f9c4dcc3f8f31164e42b562e0f60504"
+    },
+    {
+      "path": "client/persist.mjs",
+      "bytes": 17275,
+      "sha256": "aa64419bf110bede7ca5e8d663e65c1056cc07b53c0ad2c3bbd9d3c53e93718a"
+    },
+    {
+      "path": "client/pinch-frame.mjs",
+      "bytes": 2130,
+      "sha256": "3c81fb11ea05083dcf7699cee056392440e2739cc5e54e5431e1c9206b478e77"
+    },
+    {
+      "path": "client/pinch.mjs",
+      "bytes": 6278,
+      "sha256": "e74e7e0fd4b98934c21576232c5314e2e36037e25fc0e1eac679559850c63a37"
+    },
+    {
+      "path": "client/png-scene.mjs",
+      "bytes": 8137,
+      "sha256": "8aacf8e355e8be6ed8346b1848b2d6013bf4c201eef4a007afcf96f396849668"
+    },
+    {
+      "path": "client/presence.mjs",
+      "bytes": 6345,
+      "sha256": "6d822393567fd1743ff13f38e203299723ef8a08dc8c69bfaa4130635df8bdb7"
+    },
+    {
+      "path": "client/presentation.mjs",
+      "bytes": 5638,
+      "sha256": "4a66cdc695ba4e8a302236061f379ed9d6f2a0c8c9bc3b0914049d4f26a76605"
+    },
+    {
+      "path": "client/recovery.mjs",
+      "bytes": 15206,
+      "sha256": "ca80d2a245ef297b583fe351df7796d9fc90cc3e83d84f26d897a5faeab2065d"
+    },
+    {
+      "path": "client/render-wiring.mjs",
+      "bytes": 14740,
+      "sha256": "6aab755fd982a62b62f1ac24578d6eb6b6cd66d497a847ab7cebe95b73984f90"
+    },
+    {
+      "path": "client/room-key.mjs",
+      "bytes": 6346,
+      "sha256": "5eafe27e2a1e0df05bc65811c57e85ec0ddec65ff40f4dcbb9706f431cce094d"
+    },
+    {
+      "path": "client/room-wiring.mjs",
+      "bytes": 7321,
+      "sha256": "0fdf54bc43efa00ca5b2df9610efce14925356aa1a7beadc34abf44c063131fb"
+    },
+    {
+      "path": "client/run-command.mjs",
+      "bytes": 64932,
+      "sha256": "40584aec27233ea76071dad56a943d6da900b1f303aac1427a007a97ee08c98e"
+    },
+    {
+      "path": "client/semantic-announcer.mjs",
+      "bytes": 2474,
+      "sha256": "3d1ce8f1fedc821cabfbda090ae4f73b7939178dc48048a7f2c2942dc44de672"
+    },
+    {
+      "path": "client/semantic-description.mjs",
+      "bytes": 7543,
+      "sha256": "568ab57046186ee4d361e3b8784300390d35bd0544cbe2b4e1a145bd7804f0e3"
+    },
+    {
+      "path": "client/semantic-explorer.mjs",
+      "bytes": 43012,
+      "sha256": "a1d21fea1acfe4d52032fce862b59512c7fc10a51529cf04d28735b225125083"
+    },
+    {
+      "path": "client/semantic-facade.mjs",
+      "bytes": 15958,
+      "sha256": "4c06f745ec9499396022a833caac4e48100a81409eb7f5590403637dc2df4230"
+    },
+    {
+      "path": "client/semantic-snapshot.mjs",
+      "bytes": 1952,
+      "sha256": "8d26aadd74c15890696cd0e0123a5b04da1c61875ed39c098e1345839cbcbb62"
+    },
+    {
+      "path": "client/semantic-text-export.mjs",
+      "bytes": 4660,
+      "sha256": "e89b65dbefe27164534f894d69e3b255da45fa23177db34f00b3f4f8e0e1b307"
+    },
+    {
+      "path": "client/shape-switch.mjs",
+      "bytes": 9395,
+      "sha256": "1038111e610deeea9ae29539dc03726eb148380dccfa0fa38774df667905bfd9"
+    },
+    {
+      "path": "client/static-layer.mjs",
+      "bytes": 7773,
+      "sha256": "3af58ec2d4db45e26d29f976184ff61b9d7bf13a15a1835a24426ae65e73c535"
+    },
+    {
+      "path": "client/stats-panel.mjs",
+      "bytes": 13480,
+      "sha256": "88b8fd9670a69faa13c89ccea1b3b8b4dd2a1dc69deb2ffc39c2c41d765725fc"
+    },
+    {
+      "path": "client/status.mjs",
+      "bytes": 5734,
+      "sha256": "f0c266d73650ebab4b9eeaf4f1bcd49b64861d15c6cdc0d73abc226644666ad1"
+    },
+    {
+      "path": "client/sticky-note-footer.mjs",
+      "bytes": 1928,
+      "sha256": "1110f04aaff300c0834cc91a76795307c5a2edf8e87ae9276f1bba0b1cd0d48e"
+    },
+    {
+      "path": "client/storage.mjs",
+      "bytes": 4953,
+      "sha256": "12d6cfaf7ca6c8440a8dd1f884bcd17d39f101797e6d4500574aff8babfeced3"
+    },
+    {
+      "path": "client/style-icons.mjs",
+      "bytes": 2771,
+      "sha256": "6056081854c3574f541a9fdc457aaec8d45400c0b12aa1f25527f7eba43deb8e"
+    },
+    {
+      "path": "client/style-panel.mjs",
+      "bytes": 19076,
+      "sha256": "5b51a49a8cffb83f303d89d03609ca206d5e8a73b41ba15709500aea0339cda0"
+    },
+    {
+      "path": "client/style-toolbar.mjs",
+      "bytes": 16336,
+      "sha256": "f93b3384690aba87373e3c35ad9cd068efa582757f21f4bc5d51ad6b714faffd"
+    },
+    {
+      "path": "client/svg-fonts.mjs",
+      "bytes": 5319,
+      "sha256": "fe02813a35975e2a6cec0193e15c1a7db822bc733a5baec493024eb15759f71e"
+    },
+    {
+      "path": "client/tab-conflict-dialog.mjs",
+      "bytes": 3719,
+      "sha256": "53d033e038d130a962a16865e1f1c01916ded3ed5fbb9453f7ca816c3891bf7e"
+    },
+    {
+      "path": "client/tab-watch.mjs",
+      "bytes": 3972,
+      "sha256": "c7c5b3710479af21a50e20d7b4aa21d694e027beaa28038aac6a0db615485482"
+    },
+    {
+      "path": "client/text-edit.mjs",
+      "bytes": 19970,
+      "sha256": "d08cbffce334b96921e50ea04153717b53a4eeba967d7383dae345a5e019acb9"
+    },
+    {
+      "path": "client/text-editor-wiring.mjs",
+      "bytes": 34645,
+      "sha256": "d5a02992ff4e7249c910b119e6d47e8b5f0cd03867a8e89ce4d97d6a69c6343d"
+    },
+    {
+      "path": "client/text-style.mjs",
+      "bytes": 6990,
+      "sha256": "e846df92d007e9cd669944aec20da3b464dc7e1bae2e68fe596ea01c236f02f7"
+    },
+    {
+      "path": "client/theme-boot.js",
+      "bytes": 1056,
+      "sha256": "12ee8ed64c5276527ade2a16158f0fc863c4cc0140bbb5d926f4f8ef73558393"
+    },
+    {
+      "path": "client/theme.mjs",
+      "bytes": 10031,
+      "sha256": "860eeac2d9bf772258427ddffc98e99ccd1763c75b36f7a49828dccd21f1d29d"
+    },
+    {
+      "path": "client/tool-lock.mjs",
+      "bytes": 1924,
+      "sha256": "7518199f6982500e7cb72ee52ab0f2e8f60d6f94623223c500fc70f2ac43d3da"
+    },
+    {
+      "path": "client/tool-toolbar.mjs",
+      "bytes": 20694,
+      "sha256": "802ecdcbfb098ea610bf374722360b0f7e4c0bc97448c59517d19f8c579fc79b"
+    },
+    {
+      "path": "client/tools.mjs",
+      "bytes": 48625,
+      "sha256": "0bb2551e732b1d69f80b3f4c3cf1bc4410574dc2a316ec23942a58d50aa38996"
+    },
+    {
+      "path": "client/transform-preview.mjs",
+      "bytes": 6458,
+      "sha256": "8859c076c443f2f025c7bc41d7f4ec0f4b0db48f0cb74667ee768ac350c75120"
+    },
+    {
+      "path": "client/ui-bindings.mjs",
+      "bytes": 21215,
+      "sha256": "aad0e5f55257d65f066af0839faef4779e13bfa4a4705b97f69e4a0649d5da3e"
+    },
+    {
+      "path": "client/ui-state.mjs",
+      "bytes": 24668,
+      "sha256": "b7ea413fce43a423f20a97ab2525148fc7a2e1818ee0df29221718a71fe07351"
+    },
+    {
+      "path": "client/update-wiring.mjs",
+      "bytes": 5647,
+      "sha256": "bb24ab95f1b1e8fd09d18d9d8d9b91e6f26676cbb1496685d414d7833ec0c50d"
+    },
+    {
+      "path": "client/update.mjs",
+      "bytes": 4218,
+      "sha256": "32748bd7b2676de66f2af9b8e67396631105d74ec30e83b6fcfedc2f0653bf9a"
+    },
+    {
+      "path": "client/vertex-edit.mjs",
+      "bytes": 7184,
+      "sha256": "88e7e1c2c5855f69280144397e4f082cab9eb44fe4a3f5e9c672036914cd43cd"
+    },
+    {
+      "path": "client/vocabulary.mjs",
+      "bytes": 3168,
+      "sha256": "0e8eab35e64884a74b8fd2950033f2005f4aca787a75d20dfdbca07667ae1670"
+    },
+    {
+      "path": "client/webmcp-adapter.mjs",
+      "bytes": 10897,
+      "sha256": "6a421c526b58e935678a9ecd84b2b7d25bce7ee84745ea8c63168bb013434b33"
+    },
+    {
+      "path": "client/welcome-screen.mjs",
+      "bytes": 13952,
+      "sha256": "a3732f8f7ec5c09531fb5054b82fadb0fbf417e8f43c751ec7c183bbfccc5618"
+    },
+    {
+      "path": "client/wire.mjs",
+      "bytes": 46888,
+      "sha256": "0c6840e4db2aa2e7b0934b1e0251256818c0a455eb14ed1ec53a2f3c8364ff0e"
+    },
+    {
+      "path": "client/zoom-toolbar.mjs",
+      "bytes": 4501,
+      "sha256": "9abd275517abb444326bd59fb3157c1ef5491b576625953f04f5abacfa037339"
+    },
+    {
+      "path": "client/zoom.mjs",
+      "bytes": 4224,
+      "sha256": "2300d3dbf39c013c5b240581a8df96e7ddcd7c68159a18cb6ca91d1578550e7a"
+    },
+    {
+      "path": "collab.html",
+      "bytes": 3347,
+      "sha256": "4de7893261b86dd17f39dd6c186ef8e15abb48d72cb9f4c099383d5a6ee5a3b8"
+    },
+    {
+      "path": "csp.md",
+      "bytes": 4601,
+      "sha256": "8495fc8b0bb93b06bb9756adf42ddad8ad43d4c033246ee596c0834117a920c3"
+    },
+    {
+      "path": "embed.html",
+      "bytes": 3427,
+      "sha256": "aa7b424042f1a61b18a4cc9826e15db11a3a7e4fb30fd1732169e58acb392206"
+    },
+    {
+      "path": "index.html",
+      "bytes": 113750,
+      "sha256": "3ffbf4e42255d49e2dbcb0fa801701db5c6c8fe7219757db49ab00f51b325c79"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 658,
+      "sha256": "1c75b9808ee419d0b2bfd5a47e458846d5c7ae6e49a4fb61fc2cffae87c385bc"
+    },
+    {
+      "path": "pkg/build-identity.js",
+      "bytes": 676,
+      "sha256": "8eb2a30ece7ce66888bcda4e771640cca4d21361de637d767bcc8626f5a35e86"
+    },
+    {
+      "path": "pkg/build-info.json",
+      "bytes": 6246,
+      "sha256": "138a991180d364a018caaa94cc7d34360811dee6b3bf28b6ff947f190491e0bd"
+    },
+    {
+      "path": "pkg/nextdraw_wasm.d.ts",
+      "bytes": 143260,
+      "sha256": "11b72e4ae18b981e35e2750de0b2498719cc899f96697a2148706cf070d36bb6"
+    },
+    {
+      "path": "pkg/nextdraw_wasm.js",
+      "bytes": 256875,
+      "sha256": "575debdcc22a77767712e4f66eefeee2b30f66f55576131aab4fb4e8f8ced784"
+    },
+    {
+      "path": "pkg/nextdraw_wasm_bg.wasm",
+      "bytes": 2089040,
+      "sha256": "36449a9767700b0764d93ba6d2dcef14fe7af9320647b128148d6b3bc6ea4214"
+    },
+    {
+      "path": "pkg/nextdraw_wasm_bg.wasm.d.ts",
+      "bytes": 17625,
+      "sha256": "aa727a51d8b427786a7e90d7303c1a992511c64ec6ce239827887924f594cf72"
+    },
+    {
+      "path": "pkg/provenance.json",
+      "bytes": 29287,
+      "sha256": "432a741137ff4bedc068730e1814e903a4ca801186b8a8a8568dfcb33544c19d"
+    },
+    {
+      "path": "sw.js",
+      "bytes": 14230,
+      "sha256": "fafb55897b6aa3f7c4023e350b80c07ce9f48287b8d7c23d0d767a2181135642"
+    }
+  ]
+}
