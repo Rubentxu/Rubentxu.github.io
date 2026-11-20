@@ -1,8 +1,8 @@
 {
   "name": "nextdraw",
   "version": "v0.6.29",
-  "revision": "v0.6.29-901-g39781d6",
-  "commit": "39781d6ecf4369daa637ddb4490c2cf8d71cc371",
+  "revision": "v0.6.29-902-g306ff7a",
+  "commit": "306ff7a51c8863c0cf6565a6cc271b70dd04404b",
   "dirty": false,
   "license": "MIT",
   "toolchain": {
