@@ -1584,6 +1584,45 @@
             white-space: nowrap;
             border: 0;
         }
+        /* The install offer: a band of its own at the bottom centre, where the
+           reference draws nothing and the footer is not. The band is always
+           there and the button is not: the offer only exists when the browser
+           says the application can be installed, so a page that cannot offer
+           one costs nothing and shows nothing.
+
+           The band sits above the status line (which is on the left) and
+           above the phone's bottom bar (which is in the centre): the offer
+           must not cover the line that says what happened, nor the bar that
+           draws the tools on a phone. */
+        #install-offer {
+            position: fixed;
+            left: 50%;
+            bottom: calc(var(--editor-container-padding) + 120px);
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 4;
+        }
+        #install-offer button {
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            height: var(--lg-button-size);
+            padding: 0 0.75rem;
+            border: 0;
+            border-radius: var(--border-radius-lg);
+            background: var(--color-surface-low);
+            box-shadow: 0 0 0 1px var(--island-bg-color);
+            color: var(--text-primary-color);
+            font-family: var(--ui-font);
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        /* The button is hidden until the browser offers the install, and the
+           rule above would win over the browser's own `hidden` (an id beats
+           the user agent's rule), so the hidden state is spelled out. */
+        #install-offer button[hidden] {
+            display: none;
+        }
         /* The extra tools: upstream's ExtraToolsDropdown. The trigger is the
            dots icon button after the toolbar's 1.5rem divider; the menu is a
            labelled vertical list in an island under it, aligned to the
@@ -2620,6 +2659,24 @@
             <button type="button" data-help aria-label="Keyboard shortcuts and help" title="Keyboard shortcuts and help — ?"></button>
         </div>
     </footer>
+
+    <!-- The install offer. Chromium fires `beforeinstallprompt` when the
+         application meets the criteria to be installed, and `client/install-
+         wiring.mjs` keeps that offer: this button is the way to take it, and
+         it stays hidden until the browser says there is something to offer.
+         An application that is already installed, and a browser that cannot
+         install it, are offered nothing.
+
+         It is not a row of the canvas menu, and not a button of the footer
+         either: the menu is the reference's list, row for row, and the pinned
+         comparison asserts its rows exactly (`scripts/e2e/context-menu.test.mjs`),
+         while the footer is the reference's bottom row down to the pixel
+         (`scripts/e2e/canvas-footer.test.mjs`). The offer is a door into the
+         browser's own installation, so it lives in a band of its own, at the
+         bottom centre, where the reference draws nothing. -->
+    <div id="install-offer">
+        <button type="button" data-install-app aria-label="Install NextDraw as an application" title="Install NextDraw as an application to open it in a window of its own" hidden>Install app</button>
+    </div>
 
     <div id="status" role="status"></div>
     <dialog id="clear-canvas-dialog" class="sheet"></dialog>

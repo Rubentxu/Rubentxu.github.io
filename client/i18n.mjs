@@ -273,6 +273,11 @@ export const ACTIONS = Object.freeze([
     { key: "save-document", selector: "button[data-save-document]" },
     { key: "recover-document", selector: "button[data-recover-document]" },
     { key: "reload-page", selector: "button[data-reload-page]" },
+    // The install offer is a control of its own and not a row of the canvas
+    // menu: that menu is the reference's list, row for row, and the pinned
+    // comparison asserts its rows exactly. The offer lives in a band of its
+    // own, so it names its own label, title and words.
+    { key: "install-app", selector: "button[data-install-app]" },
     { key: "import", selector: "button[data-import]" },
     { key: "export-svg", selector: "button[id='export-svg']" },
     { key: "export-png", selector: "button[id='export-png']" },

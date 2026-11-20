@@ -13,6 +13,23 @@
 // promise is waiting for the editor and not for the machine — which is the
 // difference between a test that measures the application and a test that
 // measures its own guess.
+//
+// # The install offer is the page's own
+//
+// The band that carries the offer is the page's markup, and an editor embedded
+// in somebody else's page is not installable: the offer belongs to the page
+// and not to the editor, so it is wired here and not in the mount. It is wired
+// BEFORE the mount, because the browser may say the application can be
+// installed at any moment after the page loads, and an offer nobody heard is
+// an offer nobody can take. The listener lives as long as the page, which is
+// as long as the offer can matter: a page that goes away takes it with it.
 import { createNextDrawApp } from "./create-app.mjs";
+import { wireInstallOffer } from "./install-wiring.mjs";
+
+wireInstallOffer({
+    window,
+    navigator: window.navigator,
+    installButton: document.querySelector("button[data-install-app]"),
+});
 
 window.__app = await createNextDrawApp(document.body, {});

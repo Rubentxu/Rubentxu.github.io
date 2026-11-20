@@ -1,8 +1,8 @@
 {
   "name": "nextdraw",
   "version": "v0.6.29",
-  "revision": "v0.6.29-902-g306ff7a",
-  "commit": "306ff7a51c8863c0cf6565a6cc271b70dd04404b",
+  "revision": "v0.6.29-910-gd9148ea",
+  "commit": "d9148eae3b5a3fcd111ba2a84ddca34525f6bce8",
   "dirty": false,
   "license": "MIT",
   "toolchain": {
@@ -121,6 +121,7 @@
       "client/image-keeper.mjs",
       "client/image-store.mjs",
       "client/index.js",
+      "client/install-wiring.mjs",
       "client/key-scope.mjs",
       "client/keys.mjs",
       "client/laser.mjs",
@@ -198,10 +199,10 @@
       "client/zoom-toolbar.mjs",
       "client/zoom.mjs"
     ],
-    "buildSha256": "6f03ef277f63d20daac2fce20d4fceac1dff573814848a305124f73a42399756"
+    "buildSha256": "93dc5849fe9fd7219e5ce02bac8c40ec9af01e30c00aa1733395f070b5801606"
   },
   "provenance": {
-    "commit": "3af1251b9ece343a786b8d1ee0a8268ee0538025",
+    "commit": "10457cfd69cb34429877e5c6345f209d4cf99996",
     "dirty": true,
     "inputsDigest": "08fdaaba9700523d124d26de67660f39a041807aaec86e48872de2dbca5e4399",
     "inputsCount": 185
@@ -684,8 +685,8 @@
     },
     {
       "path": "client/i18n.mjs",
-      "bytes": 17388,
-      "sha256": "81bd650aa24d680f60734f5be18b4abd4f4becd71df3adff78684c916ee5963d"
+      "bytes": 17740,
+      "sha256": "64c7015c5f3e4d0ddb7816f067ffb8342dbf0d3b28156fdd4f282ed0ed23cd17"
     },
     {
       "path": "client/icons/apple-touch-icon.png",
@@ -754,8 +755,13 @@
     },
     {
       "path": "client/index.js",
-      "bytes": 1018,
-      "sha256": "90b5f7c2706bf3e979768f42279d52e39e5b40eb6b565061e6c7061d40945edc"
+      "bytes": 1803,
+      "sha256": "6b6d86a1fa4c7e2ce3935e74c3f630b8e42c145ae3087c5cacbe7759db1ea882"
+    },
+    {
+      "path": "client/install-wiring.mjs",
+      "bytes": 6114,
+      "sha256": "dac9ae0d0bb09d5fbb89a80478d8f4fe31281159168b2eacae88a61c6e38595a"
     },
     {
       "path": "client/key-scope.mjs",
@@ -814,8 +820,8 @@
     },
     {
       "path": "client/locales.mjs",
-      "bytes": 56749,
-      "sha256": "423a1014f489f174adb7b63dd9d1c8874d8c10bc37e7d5088773d68d7d4c2d1d"
+      "bytes": 57177,
+      "sha256": "94d079cb92839a04e24ca250ce0bfcbfd9cad6ae4537436f799a5b4a16db504c"
     },
     {
       "path": "client/mermaid-elements.mjs",
@@ -1154,8 +1160,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 113750,
-      "sha256": "3ffbf4e42255d49e2dbcb0fa801701db5c6c8fe7219757db49ab00f51b325c79"
+      "bytes": 116684,
+      "sha256": "17ef939da407ede12901366391936a4b46aa93c013a6b52976057603282363dc"
     },
     {
       "path": "manifest.json",
@@ -1165,12 +1171,12 @@
     {
       "path": "pkg/build-identity.js",
       "bytes": 676,
-      "sha256": "8eb2a30ece7ce66888bcda4e771640cca4d21361de637d767bcc8626f5a35e86"
+      "sha256": "2a607c46830e7ae686348a47443822574274332d179c46de23b4378894d2945f"
     },
     {
       "path": "pkg/build-info.json",
-      "bytes": 6246,
-      "sha256": "138a991180d364a018caaa94cc7d34360811dee6b3bf28b6ff947f190491e0bd"
+      "bytes": 6279,
+      "sha256": "346e24df85d79aafcace4b79d256c7d2a44d87d83edda2ae1cbbcca7e1bd3fda"
     },
     {
       "path": "pkg/nextdraw_wasm.d.ts",
@@ -1195,7 +1201,7 @@
     {
       "path": "pkg/provenance.json",
       "bytes": 29287,
-      "sha256": "432a741137ff4bedc068730e1814e903a4ca801186b8a8a8568dfcb33544c19d"
+      "sha256": "bc91ec4f49b36c38011c1933b9cfad029267a5c4452a75e71dca43b579896282"
     },
     {
       "path": "sw.js",

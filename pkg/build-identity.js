@@ -9,4 +9,4 @@
 // those bytes differ — so a worker without this import would never be
 // installed again, and the rules it runs would stay the ones of the build
 // that wrote it.
-export const BUILD_IDENTITY = "6f03ef277f63d20daac2fce20d4fceac1dff573814848a305124f73a42399756";
+export const BUILD_IDENTITY = "93dc5849fe9fd7219e5ce02bac8c40ec9af01e30c00aa1733395f070b5801606";
