@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <title>NextDraw</title>
+    <!-- The mark of NextDraw, authored by hand (TASK-154).
+         The paper the drawing is on, rounded the way a launcher draws it.
+         The full-bleed and maskable variants are composed from these same
+         strokes in `scripts/gen-app-icons.mjs`'s source pair — this file is
+         the "any" one, the favicon's source. -->
+    <rect width="512" height="512" rx="96" fill="#fafafa"/>
+    <!-- An arrow: the app's own vocabulary, and the word "next". The two
+         passes of every stroke are the wobble that says hand — the same
+         signature the generator gives every line the kernel draws. -->
+    <g fill="none" stroke="#3a6bd0" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M136 376 C 196 320 240 276 340 172"/>
+        <path d="M140 382 C 200 326 246 282 344 178"/>
+        <path d="M344 172 C 356 196 362 216 366 244"/>
+        <path d="M344 172 C 320 176 300 182 272 194"/>
+        <path d="M348 178 C 360 202 366 222 370 250"/>
+        <path d="M348 178 C 324 182 304 188 276 200"/>
+    </g>
+</svg>
