@@ -1,7 +1,7 @@
 {
-  "commit": "10457cfd69cb34429877e5c6345f209d4cf99996",
-  "dirty": true,
-  "inputsDigest": "08fdaaba9700523d124d26de67660f39a041807aaec86e48872de2dbca5e4399",
+  "commit": "7edf0da7357c029e9c4fe5279bb404ecec2262e9",
+  "dirty": false,
+  "inputsDigest": "9729198b20d012a3a3b925fff01eaeb995562e9681a1cb46286c6395b260cc82",
   "inputs": [
     {
       "path": ".cargo/config.toml",
@@ -9,11 +9,11 @@
     },
     {
       "path": "Cargo.lock",
-      "sha256": "a228f116033ba7ae58df4bcf7f15ee7d45d95d988d467b24432e1ea39a20c385"
+      "sha256": "9fd9d41b1d7fc8daf5a11ab2f7848108142f8b23a19d531c0851691f3c1813ec"
     },
     {
       "path": "Cargo.toml",
-      "sha256": "620c311b6f77b00b58e6410fb99568683c9cc4c4e78b113eb5bdff1b60f425ee"
+      "sha256": "2294327a89203901dc320206a35e124a9e92b2fe7c785c35c761362d78e5d80f"
     },
     {
       "path": "crates/nextdraw-codec/Cargo.toml",
@@ -606,6 +606,46 @@
     {
       "path": "crates/nextdraw-math/tests/conformance.rs",
       "sha256": "42080978241c0947e0d62a72c76bb0767b7faaeb9071c896e0d9946416ad3f27"
+    },
+    {
+      "path": "crates/nextdraw-serve/Cargo.toml",
+      "sha256": "159038ee7404889bf6ece80dccee96eb62d47b0ac792072e55cb37805fcdbeaa"
+    },
+    {
+      "path": "crates/nextdraw-serve/src/browser.rs",
+      "sha256": "3713a709fc7b0f092e42c25542f80d039715e067a1f75a18bda24ed91599a2dc"
+    },
+    {
+      "path": "crates/nextdraw-serve/src/json.rs",
+      "sha256": "2bcdfa8f89fc62250d9b9047f777e971ee7809b7406f11e7b2930a38956fa7b0"
+    },
+    {
+      "path": "crates/nextdraw-serve/src/lib.rs",
+      "sha256": "42d24dc2a2e0435235b9221ed1439bc303564de32b1780082a8ecfcd63a11f41"
+    },
+    {
+      "path": "crates/nextdraw-serve/src/main.rs",
+      "sha256": "2786f91e66a10f2a9ab864f1a3ca1bf6d46ee42c0abc2d5fa0d1d29af04eb110"
+    },
+    {
+      "path": "crates/nextdraw-serve/src/manifest.rs",
+      "sha256": "6b4e9a4c1f48cbda9300187ff9d6aa2388ef7aa17c74c459857141d34534fbae"
+    },
+    {
+      "path": "crates/nextdraw-serve/src/mime.rs",
+      "sha256": "88fcf1a5c673446c2873d95698cf164ae8822c5262f2186935eac9b07ece947c"
+    },
+    {
+      "path": "crates/nextdraw-serve/src/policy.rs",
+      "sha256": "abe4677215ac8ad7f840dbfb33779f6b8240f5610650e77083be985f39db67bd"
+    },
+    {
+      "path": "crates/nextdraw-serve/src/server.rs",
+      "sha256": "cba02c6ae6412c6184dcf8f2625f12333babed1abe3e03f5c2739a59aafdd7ec"
+    },
+    {
+      "path": "crates/nextdraw-serve/tests/launcher.rs",
+      "sha256": "bd4b972255cc809d8fc5a6423e42ef571661e60c668741918b261151d952c6ec"
     },
     {
       "path": "crates/nextdraw-sketch/Cargo.toml",

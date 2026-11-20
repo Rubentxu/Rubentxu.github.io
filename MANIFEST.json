@@ -1,8 +1,8 @@
 {
   "name": "nextdraw",
   "version": "v0.6.29",
-  "revision": "v0.6.29-910-gd9148ea",
-  "commit": "d9148eae3b5a3fcd111ba2a84ddca34525f6bce8",
+  "revision": "v0.6.29-915-g7edf0da",
+  "commit": "7edf0da7357c029e9c4fe5279bb404ecec2262e9",
   "dirty": false,
   "license": "MIT",
   "toolchain": {
@@ -202,10 +202,10 @@
     "buildSha256": "93dc5849fe9fd7219e5ce02bac8c40ec9af01e30c00aa1733395f070b5801606"
   },
   "provenance": {
-    "commit": "10457cfd69cb34429877e5c6345f209d4cf99996",
-    "dirty": true,
-    "inputsDigest": "08fdaaba9700523d124d26de67660f39a041807aaec86e48872de2dbca5e4399",
-    "inputsCount": 185
+    "commit": "7edf0da7357c029e9c4fe5279bb404ecec2262e9",
+    "dirty": false,
+    "inputsDigest": "9729198b20d012a3a3b925fff01eaeb995562e9681a1cb46286c6395b260cc82",
+    "inputsCount": 195
   },
   "files": [
     {
@@ -1200,8 +1200,8 @@
     },
     {
       "path": "pkg/provenance.json",
-      "bytes": 29287,
-      "sha256": "bc91ec4f49b36c38011c1933b9cfad029267a5c4452a75e71dca43b579896282"
+      "bytes": 30773,
+      "sha256": "a84f3582c4db4ae1f10d579aa145f8708dc45f05ce24b91ef632fc6ab23817d2"
     },
     {
       "path": "sw.js",
