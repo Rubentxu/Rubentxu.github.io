@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' http: https: ws: wss:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src http://youtube.com https://youtube.com http://www.youtube.com https://www.youtube.com http://youtu.be https://youtu.be http://www.youtu.be https://www.youtu.be http://vimeo.com https://vimeo.com http://www.vimeo.com https://www.vimeo.com http://player.vimeo.com https://player.vimeo.com http://www.player.vimeo.com https://www.player.vimeo.com http://drive.google.com https://drive.google.com http://www.drive.google.com https://www.drive.google.com http://figma.com https://figma.com http://www.figma.com https://www.figma.com http://link.excalidraw.com https://link.excalidraw.com http://www.link.excalidraw.com https://www.link.excalidraw.com http://gist.github.com https://gist.github.com http://www.gist.github.com https://www.gist.github.com http://twitter.com https://twitter.com http://www.twitter.com https://www.twitter.com http://x.com https://x.com http://www.x.com https://www.x.com http://*.simplepdf.eu https://*.simplepdf.eu http://stackblitz.com https://stackblitz.com http://www.stackblitz.com https://www.stackblitz.com http://val.town https://val.town http://www.val.town https://www.val.town http://giphy.com https://giphy.com http://www.giphy.com https://www.giphy.com http://reddit.com https://reddit.com http://www.reddit.com https://www.reddit.com http://forms.microsoft.com https://forms.microsoft.com http://www.forms.microsoft.com https://www.forms.microsoft.com">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NextDraw — embedded</title>
+    <link rel="stylesheet" href="./client/fonts/fonts.css">
+    <style>
+        /* The host's own chrome: the editor mounts in a box the host sizes,
+           and the box is the host's business, not the editor's. */
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #1a1a1a;
+            background: #fafafa;
+        }
+        header {
+            padding: 12px 16px;
+            font-size: 14px;
+        }
+        #mount {
+            position: relative;
+            width: min(960px, 100vw - 32px);
+            height: 560px;
+            margin: 0 16px 16px;
+            border: 1px solid #ececec;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        /* The editor's paper fills the viewport where the demo page mounts it;
+           inside this box it fills the box. The host names the box, so the
+           host's selector wins on specificity and the editor's own rule never
+           has to know a box exists. */
+        #mount #paper {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        NextDraw, mounted by <code>createNextDrawApp</code> into a box this page owns.
+        The markup inside the box is the demo page's own body, fetched and mounted —
+        one template, two consumers.
+    </header>
+    <div id="mount"></div>
+    <script type="module" src="./client/embed-page.mjs"></script>
+</body>
+</html>

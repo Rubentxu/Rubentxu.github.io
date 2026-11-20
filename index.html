@@ -1,0 +1,2635 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' http: https: ws: wss:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src http://youtube.com https://youtube.com http://www.youtube.com https://www.youtube.com http://youtu.be https://youtu.be http://www.youtu.be https://www.youtu.be http://vimeo.com https://vimeo.com http://www.vimeo.com https://www.vimeo.com http://player.vimeo.com https://player.vimeo.com http://www.player.vimeo.com https://www.player.vimeo.com http://drive.google.com https://drive.google.com http://www.drive.google.com https://www.drive.google.com http://figma.com https://figma.com http://www.figma.com https://www.figma.com http://link.excalidraw.com https://link.excalidraw.com http://www.link.excalidraw.com https://www.link.excalidraw.com http://gist.github.com https://gist.github.com http://www.gist.github.com https://www.gist.github.com http://twitter.com https://twitter.com http://www.twitter.com https://www.twitter.com http://x.com https://x.com http://www.x.com https://www.x.com http://*.simplepdf.eu https://*.simplepdf.eu http://stackblitz.com https://stackblitz.com http://www.stackblitz.com https://www.stackblitz.com http://val.town https://val.town http://www.val.town https://www.val.town http://giphy.com https://giphy.com http://www.giphy.com https://www.giphy.com http://reddit.com https://reddit.com http://www.reddit.com https://www.reddit.com http://forms.microsoft.com https://forms.microsoft.com http://www.forms.microsoft.com https://www.forms.microsoft.com">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The application's own identity, carried where the browser reads it
+         (TASK-154). The colour is the palette's accent above — the chrome's
+         own, not upstream's — and the manifest names the icons the mark is
+         drawn into. The icons themselves live under `client/icons/`, beside
+         the rest of what the page fetches. -->
+    <meta name="theme-color" content="#3a6bd0">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/svg+xml" href="./client/icons/logo.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="./client/icons/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./client/icons/favicon-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./client/icons/apple-touch-icon.png">
+    <title>NextDraw</title>
+    <link rel="stylesheet" href="./client/fonts/fonts.css">
+    <style>
+        /* The palette. Every colour the page wears is named here, and the dark
+           theme below names exactly the same ones: a palette that only one of
+           the two themes fills in is a palette whose other theme borrows the
+           first one's colours by accident.
+
+           The toolbar's geometry is not here — it lives in `#toolbar`, where it
+           is used — so this rule is the palette and nothing else. */
+        :root {
+            color-scheme: light;
+            /* The page around the drawing. */
+            --bg: #fafafa;
+            /* The chrome's ink: the toolbar's labels, the status line. */
+            --ink: #1a1a1a;
+            /* The lines between things: the toolbar's borders. */
+            --grid: #ececec;
+            /* The accent, and the ink that sits on it. */
+            --accent: #3a6bd0;
+            --accent-ink: #ffffff;
+            /* The ink on the primary button (the top-right share trigger). */
+            --on-primary: #ffffff;
+            /* The paper the drawing is on, and the welcome screen's wordmark
+               (upstream's `--color-logo-text`, `theme.scss`). */
+            --paper: #fafafa;
+            --welcome-logo-text: #190064;
+            --welcome-decor: #b8b8b8;
+            --welcome-muted: #999999;
+            --welcome-strong: #121212;
+            /* What the theme does to the colours the canvas paints. The light
+               theme does nothing.
+
+               It is a *drawing* filter and not a page filter: the canvas reads
+               it and puts it on the context while it paints, and the image
+               import takes itself out of it. A filter on the page would reach
+               the imported images too, and upstream leaves them alone. */
+            --theme-filter: none;
+            /* What a failure looks like. */
+            --alert: #a40000;
+            /* The inline editor's selected text. Upstream leaves the selection
+               to the browser, but this page declares `color-scheme: dark` while
+               upstream does not, and the browser draws a different highlight in
+               the two schemes. These two values are measured from the pin: the
+               blue its selected text is painted on, over the paper each theme
+               has, and the white its highlighttext is painted with. */
+            --editor-selection-bg: #3367d1;
+            --editor-selection-ink: #ffffff;
+            /* The colour pickers' swatches, in upstream's own states: the
+               outline that keeps a near-white swatch visible
+               (`--color-outline`, `ColorPicker.scss`), the accent a hover or a
+               press draws (`--color-primary`), and the darker accent the active
+               swatch is ringed with (`--color-primary-darkest`). */
+            --swatch-outline: #ebebeb;
+            --swatch-hover: #6965db;
+            --swatch-active: #4a47b1;
+        }
+        /* The dark theme: the same names, other values.
+
+           The filter is upstream's own rule — `invert(93%) hue-rotate(180deg)`,
+           the `--theme-filter` of `packages/excalidraw/css/theme.scss:185`, and
+           the filter upstream puts on every colour it paints
+           (`packages/common/src/colors.ts:86`). The drawing is not repainted
+           with other colours; the picture is turned over.
+
+           The paper is upstream's own dark canvas colour, `--default-bg-color`
+           (`theme.scss:198`), which is `#121212`. It used to be white with the
+           page filter turning it over, and that was the same colour reached the
+           long way round — with the imported images turned over with it, which
+           upstream does not do. The filter now belongs to the canvas and not to
+           the page, so the paper is simply the paper it is. */
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #121212;
+            --ink: #e8e8e8;
+            --grid: #2e2e2e;
+            --accent: #7aa2f7;
+            --accent-ink: #0b1020;
+            --on-primary: #ffffff;
+            --paper: #121212;
+            --welcome-logo-text: #e2dfff;
+            --welcome-decor: #7a7a7a;
+            --welcome-muted: #7a7a7a;
+            --welcome-strong: #f5f5f5;
+            --theme-filter: invert(93%) hue-rotate(180deg);
+            --alert: #ff8a8a;
+            --editor-selection-bg: #0337a1;
+            --editor-selection-ink: #ffffff;
+            --swatch-outline: #3d3d3d;
+            --swatch-hover: #a8a5ff;
+            --swatch-active: #beb9ff;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            overflow: hidden;
+        }
+        /* The paper lives on the wrapper, and the canvas carries no filter.
+
+           The filter used to live here too, on the page, and it was the wrong
+           owner: a page filter reaches everything the page shows, and one of
+           the things it showed was the imported image. Upstream leaves an
+           imported image alone — it filters every colour it *paints*
+           (`packages/common/src/colors.ts:86`) and a raster is not a colour it
+           paints. So the filter moved to the canvas, which filters what it
+           draws and lets the image step out of it (`client/paint.mjs`).
+
+           The canvas carries no `filter` of its own for Chromium's own reason:
+           a canvas that has been drawn into is rasterised as its own layer, and
+           a layer with a filter keeps the background it was rasterised with.
+           Measured in Chromium 1248: a canvas carrying both a `background` and a
+           `filter` kept the paper it had before the theme changed and the
+           filter turned *that* over. The filter is on the context while it
+           paints, which is a different thing entirely. */
+        #paper {
+            width: 100vw;
+            height: 100vh;
+            background: var(--paper);
+            position: relative;
+        }
+        /* The web embeds. A DOM layer under the canvas, for the same reason the
+           canvas is transparent over the paper: the ink the canvas paints — the
+           frame's own outline and the selection's chrome — has to stay readable
+           over a page the frame shows, and a layer the canvas sits on gets that
+           for free. The page shows through the canvas's own transparency, and
+           everything drawn above it stays above it.
+           `pointer-events: none` keeps the layer from eating the gestures the
+           canvas is there to receive; the frames it hosts are not interactive
+           yet, and a frame that cannot take the pointer cannot eat a drag. */
+        #embeddable-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        #embeddable-layer iframe {
+            position: absolute;
+            border: 0;
+            pointer-events: none;
+        }
+        /* The canvas fills the paper. The kernel handles the viewport matrix;
+           the client is told the bounds once and the size on resize. */
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            /* Disabling selection on the canvas keeps drag-to-pan from selecting the
+               whole document, which is the kind of polish that has to be wired
+               before the first frame, not added in H4. */
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        /* The context menu. A layer over the page, so it is positioned against
+           the viewport and not against the paper: the drawing turns over with
+           the theme and the menu must not, or a dark page would carry a white
+           sheet over it.
+
+           It is outside `#paper` for the same reason — a filter on the paper
+           would turn the menu over with it.
+
+           The sheet is the page's own background at 92% over nothing, so it
+           reads as a layer above the drawing rather than as a hole in it. */
+        #context-menu {
+            position: fixed;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+            /* The clamp writes a width and a height when the menu is larger
+               than the window, and the box has to be the size it was given:
+               without this, the padding and the border are added outside it
+               and a menu that was told to fit still overflows by 10px. */
+            box-sizing: border-box;
+            min-width: 190px;
+            padding: 4px;
+            background: color-mix(in srgb, var(--bg) 92%, transparent);
+            border: 1px solid var(--grid);
+            border-radius: 8px;
+            box-shadow: 0 6px 20px color-mix(in srgb, var(--ink) 18%, transparent);
+        }
+        /* The `hidden` attribute is the menu's own state, and `display: flex`
+           above would otherwise win over it — the browser's default for
+           `hidden` is `display: none` from the user-agent sheet, and a rule
+           that sets `display` here overrides it. Without this the menu would
+           be an empty sheet sitting on the canvas for ever. */
+        #context-menu[hidden] {
+            display: none;
+        }
+        #context-menu button {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 18px;
+            width: 100%;
+            font: inherit;
+            font-size: 12px;
+            text-align: left;
+            white-space: nowrap;
+            color: var(--ink);
+            background: none;
+            border: 0;
+            border-radius: 5px;
+            padding: 5px 8px;
+            cursor: pointer;
+        }
+        /* Hover and focus share a rule, because the menu is walked with the
+           keyboard as well as the mouse: a keyboard user has to see where the
+           focus is, and the outline is replaced by the same tint the mouse
+           gets, so the two ways of arriving at an item look the same. */
+        #context-menu button:hover,
+        /* El cursor del teclado (TASK-12, frente d). El anillo del navegador
+           existe pero cada navegador lo pinta a su manera y algunos lo
+           apagan al click; una regla propia y única dice lo mismo en todos:
+           lo que tiene el foco POR TECLADO se ve. `:focus-visible` es el
+           estándar pensado para ello — el ratón no lo enciende, el Tab sí. */
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+        #context-menu button:focus {
+            background: color-mix(in srgb, var(--accent) 20%, transparent);
+            outline: none;
+        }
+        /* The shortcut, dimmed and set apart. It is the same information as
+           the label, so it reads as a second voice rather than as a second
+           item. */
+        #context-menu kbd {
+            font: inherit;
+            font-size: 11px;
+            color: color-mix(in srgb, var(--ink) 55%, transparent);
+        }
+        /* The line between two sections. One pixel of the page's own border
+           colour, so the separator belongs to the palette like everything
+           else. */
+        #context-menu [role="separator"] {
+            height: 1px;
+            margin: 4px 2px;
+            background: var(--grid);
+        }
+        /* A destructive action is an actual modal: the browser's top layer keeps
+           pointer and keyboard input away from the drawing until the user chooses. */
+        #clear-canvas-dialog {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 12px;
+            width: min(92vw, 420px);
+            max-width: min(92vw, 420px);
+            margin: auto;
+            padding: 20px;
+            color: var(--ink);
+            background: var(--bg);
+            border: 1px solid var(--grid);
+            border-radius: 10px;
+            box-shadow: 0 8px 28px color-mix(in srgb, var(--ink) 28%, transparent);
+        }
+        #clear-canvas-dialog:not([open]) { display: none; }
+        #clear-canvas-dialog::backdrop {
+            background: color-mix(in srgb, var(--ink) 32%, transparent);
+        }
+        #clear-canvas-dialog h2,
+        #clear-canvas-dialog p {
+            margin: 0;
+        }
+        #clear-canvas-dialog button {
+            align-self: flex-end;
+            padding: 6px 12px;
+        }
+            position: fixed;
+            z-index: 6;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 6px;
+            background: color-mix(in srgb, var(--bg) 92%, transparent);
+            border: 1px solid var(--grid);
+            border-radius: 8px;
+            box-shadow: 0 6px 20px color-mix(in srgb, var(--ink) 18%, transparent);
+            left: 50%;
+            top: 16px;
+            translate: -50% 0;
+        }
+        #chart-dialog[hidden] {
+            display: none;
+        }
+        /* The link editor shares the chart offer's construction and its look:
+           the same sheet, one input longer. */
+        #link-dialog {
+            position: fixed;
+            z-index: 6;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 6px;
+            background: color-mix(in srgb, var(--bg) 92%, transparent);
+            border: 1px solid var(--grid);
+            border-radius: 8px;
+            box-shadow: 0 6px 20px color-mix(in srgb, var(--ink) 18%, transparent);
+            left: 50%;
+            top: 16px;
+            translate: -50% 0;
+        }
+        #link-dialog[hidden] {
+            display: none;
+        }
+        /* The link preview follows the pointer but remains a real, named link.
+           Its small offset lets the canvas keep receiving the move that opened it. */
+        #link-popup {
+            position: fixed;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: min(360px, calc(100vw - 24px));
+            padding: 6px 9px;
+            color: var(--ink);
+            background: color-mix(in srgb, var(--bg) 96%, transparent);
+            border: 1px solid var(--grid);
+            border-radius: 7px;
+            box-shadow: 0 4px 14px color-mix(in srgb, var(--ink) 16%, transparent);
+            font-size: 12px;
+        }
+        #link-popup[hidden] {
+            display: none;
+        }
+        #link-popup [data-link-address] {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #link-popup a {
+            flex: none;
+            color: var(--accent-ink);
+            white-space: nowrap;
+        }
+        /* Upstream's shape switch (`ConvertElementTypePopup.scss`): the row of
+           shapes Tab opens under the selection's bottom-left corner. */
+        .ConvertElementTypePopup {
+            position: fixed;
+            z-index: 2;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.2rem;
+            border-radius: 0.5rem;
+            background: var(--island-bg-color);
+            box-shadow: var(--shadow-island);
+            padding: 0.5rem;
+        }
+        .ConvertElementTypePopup:focus {
+            outline: none;
+        }
+        .ConvertElementTypePopup[hidden] {
+            display: none;
+        }
+        /* The export offer shares the two sheets' construction and their look:
+           one sheet, four controls and the two answers. It sits where the
+           other two sit, because the user's hand is already there. */
+        #export-dialog {
+            position: fixed;
+            z-index: 6;
+            display: flex;
+            flex-wrap: wrap;
+            max-width: min(96vw, 560px);
+            gap: 6px 10px;
+            align-items: center;
+            padding: 6px;
+            background: color-mix(in srgb, var(--bg) 92%, transparent);
+            border: 1px solid var(--grid);
+            border-radius: 8px;
+            box-shadow: 0 6px 20px color-mix(in srgb, var(--ink) 18%, transparent);
+            left: 50%;
+            top: 16px;
+            translate: -50% 0;
+        }
+        #export-dialog[hidden] {
+            display: none;
+        }
+        #export-dialog label {
+            font-size: 12px;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        #export-dialog [data-export-preview] {
+            width: 100%;
+            height: 150px;
+            object-fit: contain;
+            background: var(--bg);
+            border-radius: 4px;
+        }
+        #export-dialog input[type="number"] {
+            width: 5ch;
+        }
+        /* The file-drop veil (TASK-145): what a drop would do, said while the
+           file is in the air. The shape is upstream's `FileDropOverlay.scss`
+           — a veil over the drawing, a card, two floating papers — drawn with
+           the chrome foundation's tokens (`client/chrome-tokens.mjs`, the
+           same values the tarball declares), and the words come from the
+           locale (`client/drop-overlay.mjs`). The veil carries no pointer
+           events: the drop must land on the canvas under it. */
+        .file-drop-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            box-sizing: border-box;
+            pointer-events: none;
+            background: var(--overlay-bg-color);
+            animation: drop-overlay-appear 120ms ease-out;
+        }
+        .file-drop-overlay[hidden] {
+            display: none;
+        }
+        .file-drop-overlay__card {
+            width: 30rem;
+            max-width: 100%;
+            box-sizing: border-box;
+            padding: 2rem 1.5rem 1.5rem;
+            border: 1px solid var(--color-primary-light-darker);
+            border-radius: 1.5rem;
+            background: var(--island-bg-color);
+            /* The shadow is the ink at its strength, not a black outside the
+               palette: a fixed black would not turn over with the theme. */
+            box-shadow: 0 16px 48px color-mix(in srgb, var(--ink) 8%, transparent),
+                0 2px 8px color-mix(in srgb, var(--ink) 4%, transparent);
+            text-align: center;
+        }
+        .file-drop-overlay__title {
+            color: var(--text-primary-color);
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        .file-drop-overlay__hint {
+            margin-top: 0.5rem;
+            color: var(--text-primary-color);
+            opacity: 0.7;
+            font-size: 0.875rem;
+            line-height: 1.75;
+        }
+        .file-drop-overlay__hint kbd {
+            padding: 0.125rem 0.375rem;
+            border: 1px solid var(--default-border-color);
+            border-radius: 0.25rem;
+            background: var(--color-surface-low);
+            font: inherit;
+        }
+        .file-drop-overlay__hint--secondary {
+            margin-top: 0;
+            opacity: 0.45;
+            font-size: 0.75rem;
+        }
+        .file-drop-overlay__illustration {
+            position: relative;
+            height: 10rem;
+            margin-top: 1.75rem;
+            color: var(--color-primary);
+        }
+        .file-drop-overlay__file {
+            position: absolute;
+            top: 0.5rem;
+            left: calc(50% - 3rem);
+            width: 6rem;
+            height: 8rem;
+            overflow: visible;
+            stroke: currentColor;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            animation: drop-overlay-float 3.6s ease-in-out infinite;
+        }
+        .file-drop-overlay__file--back {
+            --file-x: -1.5rem;
+            --file-angle: -18deg;
+            top: 1rem;
+            color: var(--color-primary-light-darker);
+        }
+        .file-drop-overlay__file--front {
+            --file-x: 1.5rem;
+            --file-angle: 12deg;
+            animation-delay: -1.8s;
+        }
+        .file-drop-overlay__paper {
+            fill: var(--island-bg-color);
+        }
+        .file-drop-overlay__lines {
+            opacity: 0.35;
+        }
+        .file-drop-overlay__cross {
+            stroke-width: 4;
+        }
+        /* Replacing: the existing content (the back paper) is crossed out.
+           Keeping it — the shift held, or a library file — uncrosses it. */
+        .file-drop-overlay:not(.file-drop-overlay--keep) .file-drop-overlay__file--back .file-drop-overlay__lines {
+            opacity: 0;
+        }
+        .file-drop-overlay--keep .file-drop-overlay__file--back {
+            color: var(--color-primary);
+        }
+        .file-drop-overlay--keep .file-drop-overlay__cross {
+            opacity: 0;
+        }
+        @keyframes drop-overlay-appear {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes drop-overlay-float {
+            0%, 100% {
+                transform: translate(var(--file-x), 0) rotate(var(--file-angle));
+            }
+            50% {
+                transform: translate(var(--file-x), -0.375rem) rotate(calc(var(--file-angle) + 3deg));
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .file-drop-overlay,
+            .file-drop-overlay__file {
+                animation: none;
+            }
+            .file-drop-overlay__file {
+                transform: translate(var(--file-x), 0) rotate(var(--file-angle));
+            }
+        }
+        @media (max-height: 420px) {
+            .file-drop-overlay__card {
+                padding: 1.25rem;
+            }
+            .file-drop-overlay__illustration {
+                height: 7rem;
+                margin-top: 0.75rem;
+            }
+            .file-drop-overlay__file {
+                width: 4.5rem;
+                height: 6rem;
+                left: calc(50% - 2.25rem);
+            }
+        }
+        #link-dialog label {
+            font-size: 12px;
+            color: var(--ink);
+            padding: 0 6px;
+        }
+        #link-dialog input {
+            font: inherit;
+            font-size: 12px;
+            color: var(--ink);
+            background: none;
+            border: 1px solid var(--grid);
+            border-radius: 5px;
+            padding: 4px 8px;
+            width: 260px;
+        }
+        #link-dialog button {
+            font: inherit;
+            font-size: 12px;
+            color: var(--ink);
+            background: none;
+            border: 1px solid var(--grid);
+            border-radius: 5px;
+            padding: 4px 10px;
+            cursor: pointer;
+        }
+        #link-dialog button:hover,
+        #link-dialog button:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+        #chart-dialog > div {
+            font-size: 12px;
+            color: var(--ink);
+            padding: 0 6px;
+        }
+        #chart-dialog button {
+            font: inherit;
+            font-size: 12px;
+            color: var(--ink);
+            background: none;
+            border: 1px solid var(--grid);
+            border-radius: 5px;
+            padding: 4px 10px;
+            cursor: pointer;
+        }
+        #chart-dialog button:hover,
+        #chart-dialog button:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+        /* The command palette. A layer over the page, so it is positioned
+           against the viewport and not against the paper: the drawing turns
+           over with the theme and the palette must not, or a dark page would
+           carry a white sheet over it.
+
+           The layer covers the whole page and dims what is under it, so that
+           the palette reads as a layer above the drawing rather than as a
+           sheet floating on it. The dimming is the page's own ink at low
+           strength, so it belongs to the palette like everything else. */
+        #palette {
+            position: fixed;
+            inset: 0;
+            z-index: 7;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 12vh;
+            background: color-mix(in srgb, var(--ink) 12%, transparent);
+        }
+        /* The `hidden` attribute is the palette's own state, and `display: flex`
+           above would otherwise win over it — the browser's default for
+           `hidden` is `display: none` from the user-agent sheet, and a rule
+           that sets `display` here overrides it. Without this the palette would
+           be a dimmed page waiting for a keystroke for ever. */
+        #palette[hidden] {
+            display: none;
+        }
+        /* The panel: the field on top, the list under it. The field has no
+           border of its own because the line under it is the panel's, and two
+           borders between the same two pieces read as two separators. */
+        #palette-panel {
+            display: flex;
+            flex-direction: column;
+            width: min(520px, calc(100vw - 32px));
+            background: color-mix(in srgb, var(--bg) 96%, transparent);
+            border: 1px solid var(--grid);
+            border-radius: 10px;
+            box-shadow: 0 12px 40px color-mix(in srgb, var(--ink) 22%, transparent);
+            overflow: hidden;
+        }
+        #palette-input {
+            font: inherit;
+            font-size: 14px;
+            padding: 10px 12px;
+            color: var(--ink);
+            background: none;
+            border: 0;
+            border-bottom: 1px solid var(--grid);
+            outline: none;
+        }
+        /* Search results are grouped by the registry's command categories. */
+        #palette-list {
+            margin: 0;
+            padding: 4px;
+            list-style: none;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+        #palette-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 18px;
+            padding: 6px 8px;
+            border-radius: 5px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        /* The verb the keyboard is on. The tint is the same one the context
+           menu gives a focused row, so the two affordances look alike when
+           they are walked with the keyboard. */
+        #palette-list li[aria-selected="true"] {
+            background: color-mix(in srgb, var(--accent) 20%, transparent);
+        }
+        #palette-list kbd {
+            font: inherit;
+            font-size: 11px;
+            color: color-mix(in srgb, var(--ink) 55%, transparent);
+        }
+        #palette-list .palette-category {
+            display: block;
+            padding-top: 10px;
+            color: color-mix(in srgb, var(--ink) 65%, transparent);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: default;
+        }
+        #palette-list .palette-empty {
+            color: color-mix(in srgb, var(--ink) 55%, transparent);
+            cursor: default;
+        }
+        /* Shell chrome floats over the drawing. Upstream draws the top row as
+           a three-column grid — `LayerUI.tsx`'s `App-menu_top`, columns
+           1fr 2fr 1fr with a 1rem gap below 1536px and 1fr 1fr 1fr with 3rem
+           above it (`css/styles.scss`) — inside a fixed box whose inset is the
+           editor container's padding. The menu is the left column, the tool
+           island is centered in the middle one, and the right-hand buttons
+           close the row. The grid is what makes the island's centre the
+           window's centre without a magic number: 1440 wide, the middle track
+           is 688px from 376 to 1064, and a 542px island centered in it starts
+           at 449 — the reference's own box. */
+        #top-bar {
+            position: fixed;
+            top: var(--editor-container-padding);
+            left: var(--editor-container-padding);
+            right: var(--editor-container-padding);
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            grid-gap: 1rem;
+            align-items: flex-start;
+            z-index: 8;
+            /* The row is a frame, not a surface: a click that misses a control
+               belongs to the canvas. Every control opts back in. */
+            pointer-events: none;
+        }
+        @media (min-width: 1536px) {
+            #top-bar {
+                grid-template-columns: 1fr 1fr 1fr;
+                grid-gap: 3rem;
+            }
+        }
+        #canvas-menu {
+            grid-column: 1;
+            justify-self: start;
+            position: relative;
+            pointer-events: auto;
+        }
+        #top-right {
+            grid-column: 3;
+            justify-self: end;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.75rem;
+            /* The reference's region fills its track (344px at 1440) even
+               though its buttons are right-aligned inside it. */
+            width: 100%;
+            pointer-events: none;
+        }
+        #top-right > button {
+            pointer-events: auto;
+        }
+        /* The islands of the corners: upstream's 36x36 menu trigger and the
+           right-hand buttons (`ToolIcon.scss`, and the primary Button the
+           share trigger wears). The menu trigger is the hamburger drawing the
+           iconary carries (`client/chrome-icons.mjs`); the label is its
+           `aria-label`, so the drawing is a picture and not the name. */
+        #canvas-menu-trigger,
+        #top-right button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            height: var(--lg-button-size);
+            min-height: var(--lg-button-size);
+            padding: 0;
+            color: var(--icon-fill-color);
+            font: inherit;
+            font-size: 0.875rem;
+            background: var(--island-bg-color);
+            border: 0;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-island);
+            cursor: pointer;
+        }
+        #canvas-menu-trigger {
+            width: var(--lg-button-size);
+        }
+        #canvas-menu-trigger > svg,
+        #top-right button > svg {
+            width: var(--lg-icon-size);
+            height: var(--lg-icon-size);
+        }
+        #canvas-menu-trigger:hover,
+        #top-right button[data-library-trigger]:hover {
+            background: var(--button-hover-bg);
+        }
+        /* The share trigger is upstream's primary Button: the one control in
+           the row that is painted in the brand colour. Its width is the word
+           it carries plus the button's padding, exactly as the reference's
+           "Compartir" is. */
+        #top-right button[data-share] {
+            width: auto;
+            padding: 0 0.5rem;
+            color: var(--on-primary);
+            background: var(--color-primary);
+        }
+        #top-right button[data-share]:hover {
+            background: var(--color-brand-active);
+        }
+        #top-right button[data-library-trigger] {
+            width: var(--lg-button-size);
+        }
+        /* The library, upstream's default sidebar (`Sidebar/Sidebar.scss`,
+           `LibraryMenu.scss`): a full-height island on the right edge, 294px
+           at the reference's 1440, with its header, its two-column grid of
+           named pieces and the controls at the bottom. `client/library-panel.mjs`
+           builds the DOM; this block draws it. */
+        .library-sidebar.Island {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 120;
+            width: min(294px, 100vw);
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            background: var(--island-bg-color);
+            border-left: 1px solid var(--default-border-color);
+            border-radius: 0;
+            box-shadow: var(--shadow-island);
+        }
+        .library-sidebar .sidebar__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid var(--default-border-color);
+        }
+        .library-sidebar .sidebar-triggers {
+            display: flex;
+            padding: 2px;
+            background: var(--island-bg-color);
+            border: 1px solid var(--default-border-color);
+            border-radius: 0.625rem;
+        }
+        .library-sidebar .sidebar-tab-trigger,
+        .library-sidebar .sidebar__close {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: var(--lg-button-size);
+            height: var(--lg-button-size);
+            padding: 0;
+            color: var(--icon-fill-color);
+            background: transparent;
+            border: 0;
+            border-radius: calc(var(--border-radius-lg) - 2px);
+            cursor: pointer;
+        }
+        .library-sidebar .sidebar-tab-trigger[aria-selected="true"] {
+            color: var(--on-primary);
+            background: var(--color-primary);
+        }
+        .library-sidebar .sidebar__header__buttons {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+        }
+        .library-sidebar .sidebar__close:hover { background: var(--button-hover-bg); }
+        .library-sidebar .sidebar__close svg,
+        .library-sidebar .sidebar-tab-trigger svg {
+            width: var(--lg-icon-size);
+            height: var(--lg-icon-size);
+        }
+        .library-sidebar .library-menu-items-container {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 0;
+            padding: 0 0.75rem;
+            overflow-y: auto;
+        }
+        .library-sidebar .library-menu-items-container__items {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+        }
+        .library-sidebar .library-menu-items-container__grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+            padding: 1rem 0;
+        }
+        .library-sidebar .library-unit {
+            position: relative;
+            aspect-ratio: 1;
+            border: 1px solid transparent;
+            border-radius: var(--border-radius-lg);
+        }
+        .library-sidebar .library-unit:hover { background: var(--color-surface-high); }
+        .library-sidebar .library-unit__dragger {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            width: 100%;
+            height: 100%;
+            padding: 0.5rem;
+            box-sizing: border-box;
+            color: var(--text-primary-color);
+            background: transparent;
+            border: 0;
+            border-radius: inherit;
+            cursor: pointer;
+        }
+        .library-sidebar .library-unit__preview {
+            display: flex;
+            flex: 1 1 0;
+            min-height: 0;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .library-sidebar .library-unit__preview svg {
+            width: 2rem;
+            height: 2rem;
+        }
+        .library-sidebar .library-unit__name {
+            width: 100%;
+            overflow: hidden;
+            font-size: 0.75rem;
+            line-height: 1rem;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .library-sidebar .library-unit__remove {
+            position: absolute;
+            top: 0.125rem;
+            right: 0.125rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.25rem;
+            height: 1.25rem;
+            padding: 0;
+            color: var(--icon-fill-color);
+            background: var(--island-bg-color);
+            border: 1px solid var(--default-border-color);
+            border-radius: 50%;
+            cursor: pointer;
+            opacity: 0;
+        }
+        .library-sidebar .library-unit:hover .library-unit__remove,
+        .library-sidebar .library-unit__remove:focus-visible {
+            opacity: 1;
+        }
+        .library-sidebar .library-unit__remove svg {
+            width: 0.75rem;
+            height: 0.75rem;
+        }
+        .library-sidebar .library-menu-items__no-items {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 55px;
+            padding: 2rem 1rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            text-align: center;
+            color: var(--color-on-surface);
+            opacity: 0.75;
+        }
+        .library-sidebar .library-menu-items__no-items__label {
+            margin-bottom: 0.25rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+        .library-sidebar .library-menu-items__no-items__hint {
+            padding: 0.75rem 0;
+        }
+        .library-sidebar .library-menu-control-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 1rem 0.75rem;
+            border-top: 1px solid var(--default-border-color);
+        }
+        .library-sidebar .library-menu-browse-button {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            justify-content: center;
+            height: var(--lg-button-size);
+            padding: 0 0.5rem;
+            color: var(--on-primary);
+            font-weight: 600;
+            font-size: 0.75rem;
+            background: var(--color-primary);
+            border: 0;
+            border-radius: var(--border-radius-lg);
+            cursor: pointer;
+        }
+        .library-sidebar .library-menu-browse-button:hover { background: var(--color-brand-hover); }
+        .library-sidebar .library-menu-control-button {
+            height: var(--lg-button-size);
+            padding: 0 0.5rem;
+            color: var(--color-on-surface);
+            font: inherit;
+            font-size: 0.75rem;
+            background: transparent;
+            border: 1px solid var(--default-border-color);
+            border-radius: var(--border-radius-lg);
+            cursor: pointer;
+        }
+        .library-sidebar .library-menu-control-button:hover { background: var(--button-hover-bg); }
+
+        /* The menu, drawn as upstream's dropdown menu (`DropdownMenu.scss`):
+           one island, an 8px inset, one-pixel gaps between the rows, a 2rem
+           row, the icon before the words and the shortcut at the far end. The
+           panel is the `.dropdown-menu` root; the builder hangs one
+           `.dropdown-menu-container` inside it, which is where upstream's
+           background, shadow, radius and scroll live. */
+        #canvas-menu-panel {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            z-index: 9;
+            width: max-content;
+            min-width: 280px;
+            max-width: 20rem;
+        }
+        #canvas-menu-panel[hidden] { display: none; }
+        #canvas-menu-panel .dropdown-menu-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            max-height: calc(100svh - var(--editor-container-padding) * 2 - 2.25rem);
+            overflow-y: auto;
+            padding: 8px;
+            box-sizing: border-box;
+            color: var(--color-on-surface);
+            background: var(--island-bg-color);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-island);
+        }
+        #canvas-menu-panel .dropdown-menu-item {
+            display: flex;
+            align-items: center;
+            column-gap: 0.625rem;
+            width: 100%;
+            height: 2rem;
+            padding: 0 0.5rem;
+            box-sizing: border-box;
+            flex: 1 0 auto;
+            color: var(--color-on-surface);
+            font: inherit;
+            font-size: 0.875rem;
+            font-weight: 400;
+            text-align: left;
+            background: transparent;
+            border: 0;
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+        }
+        #canvas-menu-panel .dropdown-menu-item__icon {
+            display: flex;
+            flex: 0 0 auto;
+            align-items: center;
+            line-height: 0;
+        }
+        #canvas-menu-panel .dropdown-menu-item__icon svg,
+        #canvas-menu-panel .dropdown-menu__submenu-trigger-icon svg {
+            display: block;
+            width: 1rem;
+            height: 1rem;
+        }
+        #canvas-menu-panel .dropdown-menu-item__text {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        #canvas-menu-panel .dropdown-menu-item__shortcut {
+            margin-inline-start: auto;
+            flex: 0 0 auto;
+            opacity: 0.5;
+            font-size: 0.875rem;
+        }
+        #canvas-menu-panel .dropdown-menu-item:hover,
+        #canvas-menu-panel .dropdown-menu__submenu-trigger[aria-expanded="true"] {
+            background-color: var(--button-hover-bg);
+        }
+        #canvas-menu-panel .dropdown-menu-item:active {
+            background-color: var(--button-hover-bg);
+            box-shadow: 0 0 0 1px var(--color-brand-active);
+        }
+        #canvas-menu-panel .dropdown-menu-item:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--color-brand-hover);
+        }
+        #canvas-menu-panel .dropdown-menu-item[disabled],
+        #canvas-menu-panel .dropdown-menu-item[aria-disabled="true"] {
+            cursor: not-allowed;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        #canvas-menu-panel .dropdown-menu-item.is-active {
+            background-color: var(--color-surface-primary-container);
+            color: var(--color-on-primary-container);
+        }
+        #canvas-menu-panel .dropdown-menu-item[aria-checked="true"] .dropdown-menu-item__icon {
+            color: var(--color-primary);
+        }
+        #canvas-menu-panel .dropdown-menu__submenu-trigger-icon {
+            margin-inline-start: auto;
+            flex: 0 0 auto;
+            opacity: 0.5;
+        }
+        #canvas-menu-panel .dropdown-menu-sub {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            padding: 4px;
+            margin: 0 0 0 1.75rem;
+            background: var(--island-bg-color);
+            border: 1px solid var(--default-border-color);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-island);
+        }
+        #canvas-menu-panel .dropdown-menu-sub[hidden] { display: none; }
+        #canvas-menu-panel .dropdown-menu-separator {
+            width: 100%;
+        }
+        /* The middle column: the tool island, centered in the track, with the
+           contextual hint hanging under it. The column is only as wide as its
+           track — the island does not stretch — and the hint is centered on
+           the island's own centre. */
+        #toolbar {
+            grid-column: 2;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-width: 0;
+            pointer-events: none;
+        }
+        #tool-toolbar {
+            /* The hint is the island's own absolutely-positioned first child
+               (`Toolbar.tsx`), so the island is the containing block. */
+            position: relative;
+            pointer-events: auto;
+        }
+        /* Upstream renders the pen-mode button only when a pen was detected
+           (`Toolbar.tsx`: `<PenModeButton penDetected={...} />`). The port has
+           no pen detection, so drawing the button would be a mouse-only lie:
+           it is not shown, and the state behind it arrives with the detection
+           that makes the button true. Not drawing it also gives the island
+           upstream's 542px width — the box the reference's island has — which
+           is what centers it on the same pixels. */
+        #tool-toolbar > [data-pen-mode] { display: none; }
+        /* The footer is upstream's `Footer.tsx`: one bottom row whose left
+           corner holds the zoom group and the undo/redo group side by side,
+           and whose right corner holds the help button. The groups are the
+           reference's two islands (`.zoom-actions` and `.undo-redo-buttons`,
+           `Actions.scss`), not two rows stacked in one card. */
+        #canvas-footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: var(--editor-container-padding);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            box-sizing: border-box;
+            padding: 0 var(--editor-container-padding);
+            pointer-events: none;
+            z-index: 4;
+        }
+        #footer-left {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            pointer-events: none;
+        }
+        /* The two groups are islands of their own: the surface-low plate and
+           the one-pixel ring upstream's `filledButtonOnCanvas` mixin draws.
+           The ring reads the island ink because the port's token table does
+           not carry `--color-surface-lowest`. */
+        #history-buttons,
+        #zoom-buttons {
+            display: flex;
+            align-items: center;
+            pointer-events: auto;
+            background: var(--color-surface-low);
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 0 0 1px var(--island-bg-color);
+        }
+        #history-buttons button,
+        #zoom-buttons button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: var(--lg-button-size);
+            height: var(--lg-button-size);
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            color: var(--text-primary-color);
+            font-family: var(--ui-font);
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        #zoom-buttons button[data-zoom="out"] {
+            border-top-left-radius: var(--border-radius-lg);
+            border-bottom-left-radius: var(--border-radius-lg);
+        }
+        #zoom-buttons button[data-zoom="in"] {
+            border-top-right-radius: var(--border-radius-lg);
+            border-bottom-right-radius: var(--border-radius-lg);
+        }
+        /* The readout is the middle button: upstream's 60-pixel
+           `.reset-zoom-button`, which is what makes the group 132 pixels. */
+        #zoom-buttons button[data-zoom="reset"] {
+            width: 3.75rem;
+            padding: 0 0.625rem;
+            box-sizing: border-box;
+            color: var(--text-primary-color);
+            font-variant-numeric: tabular-nums;
+        }
+        #zoom-buttons button[data-zoom="reset"]:hover:not(:active) {
+            background: var(--button-hover-bg);
+        }
+        /* The inner box is the ToolIcon's hover and disabled plate; upstream
+           makes it fill the button so the icon buttons tile the island. */
+        #history-buttons .ToolIcon__icon,
+        #zoom-buttons .ToolIcon__icon {
+            width: 100%;
+            height: 100%;
+        }
+        #zoom-buttons button[data-zoom="out"] .ToolIcon__icon {
+            border-top-left-radius: var(--border-radius-lg);
+            border-bottom-left-radius: var(--border-radius-lg);
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        #zoom-buttons button[data-zoom="in"] .ToolIcon__icon {
+            border-top-right-radius: var(--border-radius-lg);
+            border-bottom-right-radius: var(--border-radius-lg);
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        #history-buttons button:disabled .ToolIcon__icon svg,
+        #zoom-buttons button:disabled .ToolIcon__icon svg {
+            color: var(--color-disabled);
+        }
+        #history-buttons button:disabled .ToolIcon__icon:hover,
+        #zoom-buttons button:disabled .ToolIcon__icon:hover {
+            background: initial;
+        }
+        /* The help button is upstream's `.help-icon`: the same surface-low
+           plate in the bottom-right corner, one drawing, no text. */
+        #footer-right {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-end;
+            pointer-events: none;
+            /* The help hint hangs above the button, the way upstream's does
+               (`Footer.tsx` wraps the pair in a relative box). */
+            position: relative;
+        }
+        #footer-right > .help-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: var(--lg-button-size);
+            height: var(--lg-button-size);
+            padding: 0;
+            border: 0;
+            border-radius: var(--border-radius-lg);
+            background: var(--color-surface-low);
+            box-shadow: 0 0 0 1px var(--island-bg-color);
+            color: var(--text-primary-color);
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        #footer-right > .help-icon svg {
+            width: var(--lg-icon-size);
+            height: var(--lg-icon-size);
+        }
+        #footer-right > .help-icon:hover {
+            background: var(--button-hover-bg);
+        }
+        #footer-right > .help-icon:active {
+            box-shadow: 0 0 0 1px var(--color-brand-active);
+        }
+        #footer-right > .help-icon:focus-visible {
+            box-shadow: 0 0 0 2px var(--focus-highlight-color);
+        }
+        /* The fill group is a small, visually separated cluster: a little
+           extra space from the export buttons, a divider-like left border
+           so the eye reads it as its own control, and an explicit
+           "is the kernel currently using this fill" highlight so a
+           selection with `hachure` makes the hachure button darker than
+           the other three. */
+        #fill-buttons {
+            pointer-events: auto;
+            margin-left: 8px;
+            padding-left: 8px;
+            border-left: 1px solid var(--grid);
+        }
+        #fill-buttons button.is-active {
+            background: var(--accent);
+            color: var(--accent-ink);
+            border-color: var(--accent);
+        }
+        /* The stroke group is the symmetric crack of the fill group above.
+           Same shape: a small left border, a margin from the fill
+           group, and the same "is the kernel currently using this
+           stroke" highlight driven by `strokeStyleOf` on the first
+           selected id. The order — Solid, Dashed, Dotted — is the
+           order the buttons appear, the order in
+           `STYLES.stroke.tokens` in `client/style-toolbar.mjs`, and the
+           order the smoke test rotates through. */
+        #stroke-buttons {
+            pointer-events: auto;
+            margin-left: 8px;
+            padding-left: 8px;
+            border-left: 1px solid var(--grid);
+        }
+        #stroke-buttons button.is-active {
+            background: var(--accent);
+            color: var(--accent-ink);
+            border-color: var(--accent);
+        }
+        /* A row with no active width can mean either no token or a mixed
+           selection; the indicator keeps those answers visually distinct. */
+        #line-width-buttons [data-style-mixed] {
+            display: inline-block;
+            padding: 2px 5px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+        #line-width-buttons [data-style-mixed][hidden] {
+            display: none;
+        }
+        #line-width-buttons {
+            pointer-events: auto;
+            margin-left: 8px;
+            padding-left: 8px;
+            border-left: 1px solid var(--grid);
+        }
+        #line-width-buttons button.is-active {
+            background: var(--accent);
+            color: var(--accent-ink);
+            border-color: var(--accent);
+        }
+        /* The sketch level. Fourth style group, same shape as the three above: the
+           order the buttons appear is the order in `ROUGHNESS_TOKENS` and the
+           order the smoke test rotates through. */
+        #edges-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        #edges-buttons button.is-active {
+            background: color-mix(in srgb, var(--accent) 20%, transparent);
+        }
+        #opacity-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        #opacity-row[data-mixed] #opacity {
+            outline: 1px dashed var(--grid);
+        }
+        #stroke-colour-row,
+        #background-colour-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        #stroke-colour-row input,
+        #background-colour-row input {
+            width: 7ch;
+        }
+        #stroke-colour-row input[aria-invalid],
+        #background-colour-row input[aria-invalid] {
+            outline: 1px solid var(--alert);
+        }
+        /* The quick picks, as upstream's `ColorPicker.scss` draws them: a
+           borderless 22px rounded square whose colour is written by the picker,
+           a checkerboard for "no colour", a one-pixel outline only where the
+           swatch would otherwise vanish into the panel, and a ring for the
+           states. The rings are `box-shadow` and not `outline` because they
+           have to sit where upstream's `color-picker__button-outline` sits —
+           one pixel outside the colour — without moving the row's layout. */
+        #stroke-colour-row .swatch,
+        #background-colour-row .swatch {
+            width: 22px;
+            height: 22px;
+            padding: 0;
+            border: 0;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-position: left center;
+            background-repeat: repeat;
+        }
+        #stroke-colour-row .swatch.is-transparent,
+        #background-colour-row .swatch.is-transparent {
+            /* The user agent paints a button with `ButtonFace`, which the dark
+               theme makes a grey; the checkerboard is drawn over it. Upstream's
+               `--swatch-color` is `#ededed00` for transparent, so the colour
+               underneath is no colour in both themes. */
+            background-color: transparent;
+            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==");
+        }
+        #stroke-colour-row .swatch.has-outline,
+        #background-colour-row .swatch.has-outline {
+            box-shadow: 0 0 0 1px var(--swatch-outline);
+        }
+        /* Upstream's top picks have no hover ring; its large swatches do, in
+           `--color-primary`. These picks are the panel's whole palette, so the
+           same accent marks the clickable state here: without it the swatch has
+           no answer to the pointer, and in the dark theme the nearest swatches
+           are the colours that a dark ring would swallow. */
+        #stroke-colour-row .swatch:hover:not(.is-active),
+        #background-colour-row .swatch:hover:not(.is-active),
+        #stroke-colour-row .swatch:active,
+        #background-colour-row .swatch:active {
+            box-shadow: 0 0 0 1px var(--swatch-hover);
+        }
+        #stroke-colour-row .swatch.is-active,
+        #background-colour-row .swatch.is-active {
+            box-shadow: 0 0 0 1px var(--swatch-active);
+        }
+        /* The inline editor's selected text: upstream leaves it to the browser,
+           whose highlight this page cannot inherit because its dark theme
+           declares `color-scheme: dark` and upstream's does not. The two
+           colours are the pin's, measured over each theme's paper. */
+        #text-edit-layer textarea::selection {
+            background-color: var(--editor-selection-bg);
+            color: var(--editor-selection-ink);
+        }
+        #stroke-colour-row[data-mixed] input,
+        #background-colour-row[data-mixed] input {
+            outline: 1px dashed var(--grid);
+        }
+        #text-size-row,
+        #text-family-row,
+        #text-align-row,
+        #text-vertical-row,
+        #arrow-type-row,
+        #arrow-heads-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        #text-size-row input {
+            width: 5ch;
+        }
+        #text-size-row input[aria-invalid] {
+            outline: 1px solid var(--alert);
+        }
+        #text-family-row button.is-active,
+        #text-align-row button.is-active,
+        #text-vertical-row button.is-active,
+        #arrow-type-row button.is-active,
+        #arrow-heads-row button.is-active {
+            background: color-mix(in srgb, var(--accent) 20%, transparent);
+        }
+        #text-size-row[data-mixed] input {
+            outline: 1px dashed var(--grid);
+        }
+        /* `display: flex` beats the user-agent `hidden`, so the attribute needs its own rule. */
+        #arrow-heads-row[hidden],
+        #arrow-type-row[hidden],
+        #arrow-heads-row [data-arrow-row][hidden],
+        #arrow-type-row [data-arrow-row][hidden] {
+            display: none;
+        }
+        #arrow-heads-row [data-arrow-row],
+        #arrow-type-row [data-arrow-row] {
+            display: flex;
+            gap: 2px;
+        }
+        #arrow-heads-row [data-mixed],
+        #arrow-type-row [data-mixed] {
+            outline: 1px dashed var(--grid);
+        }
+        #roughness-buttons {
+            pointer-events: auto;
+            margin-left: 8px;
+            padding-left: 8px;
+            border-left: 1px solid var(--grid);
+        }
+        #roughness-buttons button.is-active {
+            background: var(--accent);
+            color: var(--accent-ink);
+            border-color: var(--accent);
+        }
+        /* The theme's button. It is the one control that is not about the
+           drawing but about the page the drawing is on, and it says which theme
+           is on the same way the style groups say which one is in use: the
+           accent, and the ink that sits on it. The air on its left keeps it
+           from reading as the last drawing tool. */
+        #theme-toggle {
+            margin-left: 8px;
+        }
+        #theme-toggle.is-active {
+            background: var(--accent);
+            color: var(--accent-ink);
+            border-color: var(--accent);
+        }
+        /* The active drawing tool is drawn by the chrome's stylesheet
+           (`client/chrome.mjs`): the binder writes `aria-pressed` for the
+           assistive technology and `ToolIcon--checked` for the CSS, and the
+           checked rule reads the foundation's tokens — one state, one owner.
+           This page keeps only the row's own layout: upstream's toolbar is a
+           flex row (`Stack.Row`) with the quarter-rem gap, and it wraps,
+           because a row that cannot give way is a row that leaves the screen. */
+        #tool-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            column-gap: calc(var(--space-factor, 0.25rem) * 1);
+        }
+        #toolbar button:not(.ToolIcon):focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 1px;
+        }
+        /* The tool buttons' focus is the chrome's own language — a ring in the
+           foundation's focus token (`client/chrome.mjs`, ToolIcon.scss) — so
+           the island does not wear this page's accent outline. */
+        /* The text-edit layer is sized to the viewport so the absolute
+           `<textarea>` of the inline editor lines up with the dblclick
+           event's client coordinates. `pointer-events: none` keeps the
+           layer transparent to clicks; the editor itself re-enables
+           pointer events on its own element. `z-index: 5` puts the
+           layer above the canvas (z=0) but below the toolbar (the
+           toolbar's buttons sit at the top of the stacking order
+           because the bar gets the highest priority of pointer
+           events). */
+        #text-edit-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 5;
+        }
+        /* The status line is a live region, not a caption. The ready text —
+           the WASM model and session sentence — stays in the region for a
+           screen reader but is not drawn, because upstream's footer has no
+           persistent status text. A problem or a notice is drawn, above the
+           footer, because that is the news the user has to act on. */
+        #status {
+            position: fixed;
+            left: var(--editor-container-padding);
+            bottom: calc(var(--editor-container-padding) + 44px);
+            max-width: min(480px, calc(100vw - 2 * var(--editor-container-padding)));
+            font-size: 11px;
+            color: var(--ink);
+            opacity: 0.4;
+            pointer-events: none;
+            white-space: pre-wrap;
+            z-index: 4;
+        }
+        #status[data-quiet="false"] {
+            opacity: 0.9;
+        }
+        #status[data-quiet="true"] {
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            clip-path: inset(50%);
+            white-space: nowrap;
+            border: 0;
+        }
+        /* The extra tools: upstream's ExtraToolsDropdown. The trigger is the
+           dots icon button after the toolbar's 1.5rem divider; the menu is a
+           labelled vertical list in an island under it, aligned to the
+           trigger's right edge (`Toolbar.scss`:
+           `.App-toolbar__extra-tools-dropdown { margin-top: .375rem; right: 0;
+           min-width: 11.875rem }`), and closed until the user asks. */
+        .extra-tools {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .extra-tools-panel {
+            position: absolute;
+            top: calc(100% + 0.375rem);
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            min-width: 11.875rem;
+            padding: 0.5rem;
+            background: var(--island-bg-color);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-island);
+            z-index: 6;
+        }
+        .extra-tools-panel[hidden] {
+            display: none;
+        }
+        /* One row of the menu, upstream's `dropdown-menu-item`: the icon, the
+           words and the shortcut, the last one pushed to the far end. */
+        .dropdown-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            height: 2rem;
+            padding: 0 0.5rem;
+            box-sizing: border-box;
+            font: inherit;
+            font-size: 0.875rem;
+            font-weight: 400;
+            color: var(--color-on-surface);
+            text-align: start;
+            background-color: transparent;
+            border: none;
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+        }
+        .dropdown-menu-item:hover {
+            background-color: var(--button-hover-bg);
+        }
+        .dropdown-menu-item:focus-visible {
+            box-shadow: inset 0 0 0 1px var(--color-brand-hover);
+        }
+        .dropdown-menu-item__icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 1rem;
+            height: 1rem;
+            flex: 0 0 auto;
+        }
+        .dropdown-menu-item__icon svg {
+            width: 1rem;
+            height: 1rem;
+        }
+        .dropdown-menu-item__text {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .dropdown-menu-item__shortcut {
+            margin-inline-start: auto;
+            opacity: 0.5;
+        }
+        .dropdown-menu-item--selected {
+            background: var(--color-surface-primary-container);
+            --icon-fill-color: var(--color-on-primary-container);
+        }
+        /* The trigger wears the armed extra tool's drawing (the binder swaps
+           it) and upstream's selected tint; it is not a ToolIcon, so the
+           foundation's checked class does not reach it. */
+        .App-toolbar__extra-tools-trigger--selected {
+            background: var(--color-surface-primary-container);
+            color: var(--color-on-primary-container);
+        }
+        /* The style panel: upstream's selected-shape actions, one island in a
+           single column. The rows are `fieldset > legend + .buttonList`
+           (Actions.tsx), and the whole panel is the selection's: with nothing
+           selected the kernel answers no style and the panel is not drawn. The
+           position under the toolbar is written by `client/ui-bindings.mjs`
+           from the bar's own box; the fixed rules here are the fallback a
+           reader gets before the first paint. */
+        #style-panel {
+            position: fixed;
+            left: var(--editor-container-padding);
+            /* The fallback a reader gets before the first paint. The binder
+               writes the real values from the menu's box and the window's
+               height (client/style-panel.mjs). */
+            top: 76px;
+            box-sizing: border-box;
+            width: 195px;
+            max-height: calc(100vh - 166px);
+            overflow-y: auto;
+            padding: 8px;
+            pointer-events: auto;
+            background: var(--island-bg-color);
+            border: 1px solid var(--default-border-color);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-island);
+            z-index: 4;
+        }
+        #style-panel[hidden] {
+            display: none;
+        }
+        #style-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .style-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            min-width: 0;
+        }
+        /* `display: flex` beats the user-agent `[hidden]`, so a section the
+           binder retires needs its own rule. */
+        .style-row[hidden] {
+            display: none;
+        }
+        #layers-row,
+        #align-row,
+        #actions-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        #layers-row button,
+        #align-row button,
+        #actions-row button {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            justify-content: center;
+        }
+        #layers-row button[hidden],
+        #align-row button[hidden],
+        #actions-row button[hidden] {
+            display: none;
+        }
+        #layers-row button svg,
+        #align-row button svg,
+        #actions-row button svg {
+            width: 16px;
+            height: 16px;
+        }
+        .style-row > legend {
+            padding: 0;
+            font-size: 12px;
+            color: var(--text-primary-color);
+            opacity: 0.75;
+        }
+        .style-icon {
+            display: inline-flex;
+            width: 16px;
+            height: 16px;
+            flex: 0 0 auto;
+        }
+        .style-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+        #style-panel button {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .style-row .buttonList {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        /* The contextual hint, upstream's `HintViewer` (`HintViewer.scss`):
+           not a panel but a plain grey sentence under the island, the island's
+           own width and centred, with the shortcut as a `<kbd>`. It is the
+           island's first child and absolute to it, so it hangs below the
+           buttons wherever the island ends and never covers them; it takes no
+           pointer events because it is a reference, not a control. */
+        #tool-hint {
+            position: absolute;
+            box-sizing: border-box;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            max-width: 100%;
+            margin-top: 0.5rem;
+            pointer-events: none;
+            text-align: center;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            /* The foundation's two greys by theme: upstream reads
+               `--color-gray-40` light and `--color-gray-60` dark, which is
+               exactly what the keybinding token names on each theme. */
+            color: var(--keybinding-color);
+            white-space: normal;
+        }
+        #tool-hint[hidden] {
+            display: none;
+        }
+        #tool-hint > span {
+            padding: 0.25rem;
+        }
+        #tool-hint kbd {
+            display: inline-block;
+            margin: 0 1px;
+            padding: 1px 3px;
+            font-family: monospace;
+            font-size: 10px;
+            border: 1px solid var(--keybinding-color);
+            border-radius: 4px;
+        }
+        /* The help sheet, upstream's `HelpDialog.tsx` over `Dialog.tsx` and
+           `Modal.scss`: a full-window modal, a dimmed backdrop, a centred
+           island at 960 pixels, a title with the reference's rule, one
+           "Keyboard shortcuts" section and three shortcut islands — tools and
+           view in the left column, editor in the right one at 1024 pixels and
+           wider. The rows, the keys and the modal behaviour are built by
+           `client/help.mjs`; this block is only the drawing. */
+        #help-dialog {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: calc(var(--space-factor, 0.25rem) * 10);
+            overflow: auto;
+        }
+        #help-dialog[hidden] { display: none; }
+        #help-dialog .Modal__background {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            background-color: var(--overlay-bg-color);
+        }
+        #help-dialog .Modal__content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 960px;
+            max-height: 100%;
+            overflow-y: auto;
+            box-sizing: border-box;
+            background: var(--island-bg-color);
+            border: 1px solid var(--default-border-color);
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-island);
+        }
+        #help-dialog .Modal__content:focus { outline: none; }
+        #help-dialog .Island { padding: 2.5rem; }
+        #help-dialog .Dialog__title {
+            margin: 0 0 1.5rem;
+            padding: 0 0 0.75rem;
+            text-align: left;
+            font-size: 1.25rem;
+            border-bottom: 1px solid var(--default-border-color);
+        }
+        #help-dialog .Dialog__close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.5rem;
+            margin: 0;
+            padding: 0;
+            color: var(--icon-fill-color);
+            background: transparent;
+            border: 0;
+            line-height: 0;
+            cursor: pointer;
+        }
+        #help-dialog .Dialog__close:hover { color: var(--color-brand-hover); }
+        #help-dialog .Dialog__close svg { width: 1.5rem; height: 1.5rem; }
+        #help-dialog h3 {
+            margin: 1.5rem 0;
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+        #help-dialog .HelpDialog__islands-container {
+            display: grid;
+            grid-column-gap: 1.5rem;
+            grid-row-gap: 2rem;
+        }
+        @media screen and (min-width: 1024px) {
+            #help-dialog .HelpDialog__islands-container {
+                grid-template-columns: 1fr 1fr;
+            }
+            #help-dialog .HelpDialog__island--tools { grid-area: 1 / 1 / 2 / 2; }
+            #help-dialog .HelpDialog__island--view { grid-area: 2 / 1 / 3 / 2; }
+            #help-dialog .HelpDialog__island--editor { grid-area: 1 / 2 / 3 / 3; }
+        }
+        #help-dialog .HelpDialog__island h4 {
+            margin: 0 0 0.625rem;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        #help-dialog .HelpDialog__island-content {
+            border: 1px solid var(--default-border-color);
+            border-radius: var(--border-radius-lg);
+        }
+        #help-dialog .HelpDialog__shortcut {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            column-gap: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--default-border-color);
+        }
+        #help-dialog .HelpDialog__shortcut:last-child { border-bottom: none; }
+        #help-dialog .HelpDialog__key-container {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+            column-gap: 0.25rem;
+        }
+        #help-dialog .HelpDialog__key {
+            display: flex;
+            box-sizing: border-box;
+            align-items: center;
+            padding: 0.5rem;
+            font-family: inherit;
+            font-size: 0.625rem;
+            line-height: 1;
+            background-color: var(--color-surface-primary-container);
+            border-radius: var(--border-radius-md);
+        }
+        #help-dialog .HelpDialog__or {
+            font-size: 0.75rem;
+            opacity: 0.6;
+        }
+        @media (max-width: 640px), (pointer: coarse) {
+            #help-dialog { padding: 0; }
+            #help-dialog .Modal__content {
+                max-width: 100%;
+                height: 100%;
+                border: 0;
+                border-radius: 0;
+            }
+            #help-dialog .Island { padding: 1.25rem; }
+            #help-dialog .Dialog__close { top: 1rem; right: 1rem; }
+            #help-dialog .HelpDialog__islands-container { grid-template-columns: 1fr; }
+        }
+
+        /* The welcome screen — upstream's `WelcomeScreen.scss` over this
+           page's canvas, with the same class names and the same boxes
+           (TASK-217). The centre is `pointer-events: none`, so a press that
+           misses a menu row is a press on the drawing; only the two rows opt
+           back into the pointer, which is upstream's `pointer-events:
+           var(--ui-pointerEvents)` with the answer this page always gives.
+           The three hints are decoration: they never take the pointer. */
+        .excalifont {
+            font-family: "Excalifont", "Xiaolai";
+        }
+        #welcome-screen {
+            position: absolute;
+            inset: 1rem;
+            z-index: 1;
+            display: none;
+            flex-direction: column;
+            gap: 2rem;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+        #welcome-screen[data-visible="true"] {
+            display: flex;
+        }
+        #welcome-screen .welcome-screen-decor {
+            pointer-events: none;
+            color: var(--welcome-decor);
+        }
+        #welcome-screen .welcome-screen-center__logo {
+            display: flex;
+            align-items: center;
+            column-gap: 0.75rem;
+            font-size: 2.25rem;
+        }
+        #welcome-screen .ExcalidrawLogo {
+            display: flex;
+            align-items: center;
+        }
+        #welcome-screen .ExcalidrawLogo svg {
+            flex: 0 0 auto;
+        }
+        #welcome-screen .ExcalidrawLogo .ExcalidrawLogo-icon {
+            width: auto;
+            height: 2.5rem;
+            color: var(--color-primary);
+        }
+        #welcome-screen .ExcalidrawLogo .ExcalidrawLogo-text {
+            width: auto;
+            height: 1.75rem;
+            margin-left: 0.75rem;
+            color: var(--welcome-logo-text);
+        }
+        #welcome-screen .welcome-screen-center__heading {
+            font-size: 1.125rem;
+            line-height: 1.35rem;
+            text-align: center;
+        }
+        #welcome-screen .welcome-screen-center__heading-line {
+            display: block;
+        }
+        #welcome-screen .welcome-screen-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            justify-content: center;
+            align-items: center;
+        }
+        #welcome-screen .welcome-screen-menu-item {
+            box-sizing: border-box;
+            pointer-events: auto;
+            color: var(--welcome-muted);
+            font-size: 0.875rem;
+            width: 100%;
+            min-width: 300px;
+            max-width: 400px;
+            display: grid;
+            align-items: center;
+            justify-content: space-between;
+            background: none;
+            border: 1px solid transparent;
+            padding: 0.75rem;
+            border-radius: var(--border-radius-md);
+            grid-template-columns: calc(var(--default-icon-size) + 0.5rem) 1fr 3rem;
+        }
+        #welcome-screen .welcome-screen-menu-item__text {
+            display: flex;
+            align-items: center;
+            margin-right: auto;
+            text-align: left;
+            column-gap: 0.5rem;
+        }
+        #welcome-screen .welcome-screen-menu-item__icon {
+            width: var(--default-icon-size);
+            height: var(--default-icon-size);
+        }
+        #welcome-screen .welcome-screen-menu-item__icon svg {
+            width: var(--default-icon-size);
+            height: var(--default-icon-size);
+        }
+        #welcome-screen .welcome-screen-menu-item__shortcut {
+            margin-left: auto;
+            color: var(--welcome-decor);
+            font-size: 0.75rem;
+        }
+        #welcome-screen .welcome-screen-menu-item:hover {
+            text-decoration: none;
+            background: var(--button-hover-bg);
+        }
+        #welcome-screen .welcome-screen-menu-item:hover .welcome-screen-menu-item__shortcut,
+        #welcome-screen .welcome-screen-menu-item:hover .welcome-screen-menu-item__icon,
+        #welcome-screen .welcome-screen-menu-item:hover .welcome-screen-menu-item__text {
+            color: var(--welcome-strong);
+        }
+        #welcome-screen .welcome-screen-menu-item:active {
+            background: var(--button-hover-bg);
+            border-color: var(--color-brand-active);
+        }
+        #welcome-screen .welcome-screen-menu-item:active .welcome-screen-menu-item__shortcut,
+        #welcome-screen .welcome-screen-menu-item:active .welcome-screen-menu-item__icon,
+        #welcome-screen .welcome-screen-menu-item:active .welcome-screen-menu-item__text {
+            color: var(--welcome-strong);
+        }
+        #welcome-screen .welcome-screen-menu-item:focus-visible {
+            outline: transparent;
+            box-shadow: 0 0 0 1px var(--color-brand-hover);
+        }
+        :root[data-theme="dark"] #welcome-screen .welcome-screen-menu-item:hover {
+            background-color: var(--color-surface-low);
+        }
+        /* The hints, upstream's three arrows. They are `display: none` until
+           the state says the welcome screen is up, and the height gate is
+           upstream's: below 780px there is no room for an arrow that points. */
+        .welcome-screen-decor-hint {
+            display: none;
+            pointer-events: none;
+            color: var(--welcome-decor);
+        }
+        .welcome-screen-decor-hint[data-visible="true"] {
+            display: flex;
+        }
+        @media (max-height: 780px) {
+            .welcome-screen-decor-hint {
+                display: none !important;
+            }
+        }
+        @media (max-height: 500px), (max-width: 320px) {
+            #welcome-screen[data-visible="true"] {
+                display: none;
+            }
+        }
+        /* Zen mode takes the chrome away, and upstream hides the welcome
+           screen with it (`App.tsx`: `!appState.zenModeEnabled`). The mode is
+           an attribute the page writes without a repaint, so the rule answers
+           here instead of waiting for the next frame. */
+        [data-zen] #welcome-screen,
+        [data-zen] .welcome-screen-decor-hint {
+            display: none !important;
+        }
+        .welcome-screen-decor-hint--menu {
+            position: absolute;
+            width: 320px;
+            font-size: 1rem;
+            top: 100%;
+            margin-top: 0.25rem;
+            margin-inline-start: 0.6rem;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+        .welcome-screen-decor-hint__arrow {
+            display: flex;
+        }
+        .welcome-screen-decor-hint--menu svg {
+            width: 41px;
+            height: 94px;
+        }
+        :root[dir="rtl"] .welcome-screen-decor-hint--menu svg {
+            transform: scaleX(-1);
+        }
+        @media (max-width: 860px) {
+            .welcome-screen-decor-hint--menu .welcome-screen-decor-hint__label {
+                max-width: 160px;
+            }
+        }
+        .welcome-screen-decor-hint--toolbar {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 2.5rem;
+            align-items: baseline;
+        }
+        .welcome-screen-decor-hint--toolbar .welcome-screen-decor-hint__label {
+            width: 120px;
+            position: relative;
+            top: -0.5rem;
+        }
+        .welcome-screen-decor-hint--toolbar svg {
+            width: 38px;
+            height: 78px;
+        }
+        :root[dir="rtl"] .welcome-screen-decor-hint--toolbar svg {
+            transform: scaleX(-1);
+        }
+        .welcome-screen-decor-hint--help {
+            position: absolute;
+            right: 0;
+            bottom: 100%;
+        }
+        :root[dir="rtl"] .welcome-screen-decor-hint--help {
+            left: 0;
+            right: auto;
+        }
+        .welcome-screen-decor-hint--help svg {
+            margin-top: 0.5rem;
+            width: 85px;
+            height: 71px;
+            transform: scaleX(-1) rotate(80deg);
+        }
+        :root[dir="rtl"] .welcome-screen-decor-hint--help svg {
+            transform: rotate(80deg);
+        }
+        /* The bar on a phone. The reference's phone has no row of tools at the
+           top and no footer: it has a bottom bar (`MobileMenu.tsx:160-187`,
+           `styles.scss:322-346`) with the horizontal style row ABOVE the tool
+           island, and the undo/redo in that row (`Actions.tsx:853-872`). This
+           block is that bar: centred, 28px short of the window on each side,
+           ten pixels above the bottom edge — the reference's own numbers.
+           The share trigger is hidden because upstream's `renderTopRightUI`
+           answers null on a phone, and the zoom group and the help button go
+           with the footer the reference does not draw there. The touch floor
+           is this repository's and not the reference's (44px against
+           upstream's 32px), so the bar is taller by exactly that difference;
+           `scripts/mobile-bar-capture.mjs` measures both. */
+        @media (max-width: 640px), (pointer: coarse) {
+            #canvas-menu {
+                position: fixed;
+                top: 0.75rem;
+                left: 0.75rem;
+            }
+            /* The bottom bar: the reference's `.App-bottom-bar`. */
+            #toolbar {
+                position: fixed;
+                bottom: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: calc(100% - 28px);
+                max-width: 450px;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+            }
+            /* The style row: the reference's `.mobile-shape-actions`, the row
+               that carries the undo/redo above the tools. It is the same
+               element the desktop draws as an island under the menu, and the
+               two placements are the one thing that changes here. */
+            #style-panel {
+                order: -1;
+                position: relative;
+                left: auto;
+                top: auto;
+                max-height: none;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 4px;
+                width: auto;
+                height: 44px;
+                padding: 0;
+                overflow: hidden;
+                background: transparent;
+                border: 0;
+                box-shadow: none;
+            }
+            /* The sections are a strip that scrolls sideways, the way the
+               reference's row is one that hides its overflow. */
+            #style-rows {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 8px;
+                flex: 1 1 auto;
+                min-width: 0;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scrollbar-width: none;
+            }
+            .style-row {
+                flex: none;
+                flex-direction: row;
+                align-items: center;
+                gap: 4px;
+            }
+            /* The legend names its section for a screen reader; a row 44
+               pixels tall has no room to draw it. */
+            .style-row > legend {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                margin: -1px;
+                padding: 0;
+                overflow: hidden;
+                clip: rect(0 0 0 0);
+                white-space: nowrap;
+                border: 0;
+            }
+            /* The row is 44 pixels tall, so a control in it is 44 pixels tall:
+               the border box, not the content box, or a control with a border
+               would be taller than the row that holds it. */
+            #style-panel button,
+            #style-panel input {
+                box-sizing: border-box;
+                min-height: 44px;
+                /* A range input carries a margin of its own (2px in Chromium),
+                   and a row 44 pixels tall has no room for it. */
+                margin: 0;
+            }
+            /* The opacity slider is the one control that would take the whole
+               row; a row is a strip of controls, not one of them. */
+            #style-panel input[type="range"] {
+                max-width: 120px;
+            }
+            /* The tool island: the reference's `.mobile-toolbar`, a strip that
+               scrolls sideways. */
+            #tool-toolbar {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                margin: 0 4px;
+                padding: 0;
+                scrollbar-width: none;
+            }
+            /* Upstream's phone menu keeps the lock outside the toolbar; the
+               tool strip is the tools. Hiding it here also keeps the last
+               tool reachable at 320px without a scroll. */
+            #tool-toolbar > [data-tool-lock] {
+                display: none;
+            }
+            #top-right {
+                position: fixed;
+                top: 0.75rem;
+                right: 0.75rem;
+                width: auto;
+            }
+            #top-right button[data-share] {
+                display: none;
+            }
+            /* The reference's phone has no footer: the zoom group and the help
+               button go with it, and the undo/redo leave it for the style row
+               (`client/ui-bindings.mjs` moves them there and back). */
+            #zoom-buttons,
+            #footer-right {
+                display: none;
+            }
+            #footer-left {
+                display: contents;
+            }
+            /* The undo/redo in the row are the reference's plain icon buttons,
+               not the footer's island. */
+            #history-buttons {
+                flex: none;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                pointer-events: auto;
+                background: transparent;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            #toolbar button {
+                min-width: 44px;
+                min-height: 44px;
+            }
+            /* The reference draws no hint on a phone. */
+            #tool-hint {
+                display: none;
+            }
+            /* The welcome screen's hint points at the toolbar, which is at the
+               bottom of the screen now: the sentence would hang off it. */
+            #welcome-screen-toolbar-hint {
+                display: none;
+            }
+        }
+    </style>
+    <!-- The theme, before the first paint.
+
+         The module that owns the theme (`client/theme.mjs`) is deferred: the
+         browser runs it after the page is parsed, so a user who chose the dark
+         theme saw the light one until then. Measured in Chromium 1248 with a
+         screencast from the first paint: the first frame was `#fafafa` and the
+         second was `#121212` — eighty-five milliseconds of white page.
+
+         This script is a classic one, in a file: it runs while the head is
+         parsed, so the first paint is already the right theme, and a module
+         would not (a module waits for the parse to finish, and the page may
+         already have painted). It is a file and not a script inside the page
+         because the page's policy forbids inline scripts — a policy that
+         allowed them would allow every injected one too. It reads the same
+         key the module does and puts the same attribute on the same element,
+         and `client/theme.test.mjs` throws if the two ever disagree.
+
+         It does not check that the stored word is a theme: the stylesheet only
+         knows `dark`, so a word that names nothing leaves the light theme on,
+         which is the same answer the module gives. And a browser that refuses
+         to be asked keeps the default theme instead of failing to paint. -->
+    <script src="./client/theme-boot.js"></script>
+</head>
+<body>
+    <!-- The paper the drawing is on, and the theme's filter over it. The canvas
+         is transparent inside it: see `#paper` for why the two cannot live on
+         the canvas itself. -->
+    <div id="paper">
+        <div id="embeddable-layer" aria-hidden="true"></div>
+        <canvas id="canvas"></canvas>
+        <!-- The welcome screen's centre. Empty on purpose: `client/welcome-screen.mjs`
+             builds upstream's logo, notice and two rows into it while the
+             document is empty, and hides it the moment it is not. -->
+        <div id="welcome-screen" class="welcome-screen-center" data-visible="false"></div>
+    </div>
+    <div id="help-dialog" role="dialog" aria-label="Keyboard shortcuts and help" aria-modal="true" hidden></div>
+    <!-- The context menu. It lives outside `#paper` on purpose: the paper
+         carries the theme's filter, and a menu inside it would be turned over
+         along with the drawing — a white sheet on a dark page.
+
+         It is empty in the markup because `client/context-menu.mjs` builds it:
+         the menu draws what `client/commands.mjs` says, and a hand-written row
+         here would be a second place where a command is named. -->
+    <div id="context-menu" role="menu" hidden></div>
+    <!-- The chart offer. Built by `client/chart-dialog.mjs`, like the context
+         menu is: the page carries the sheet, the module carries the words. -->
+    <div id="chart-dialog" role="dialog" aria-label="Paste a chart" hidden></div>
+    <!-- The link editor. The chart offer's sibling: the page carries the
+         sheet, `client/link-dialog.mjs` carries the words, and the kernel
+         carries the guard. -->
+    <div id="link-dialog" role="dialog" aria-label="Edit the link" hidden></div>
+    <div id="link-popup" role="group" aria-label="Link preview" hidden></div>
+    <!-- The export offer. The chart offer's sibling: the page carries the
+         sheet, `client/export-dialog.mjs` carries the words, and the kernel
+         carries the file's four asks. -->
+    <div id="export-dialog" role="dialog" aria-label="Export options" hidden></div>
+    <!-- The command palette. Like the context menu, it lives outside `#paper`
+         for the same reason, and it is empty in the markup because
+         `client/palette.mjs` builds it: the rows are the registry's rows, and
+         a hand-written row here would be a second place where a command is
+         named.
+
+         The field is a combobox and the list is a listbox, and the field
+         points at the row the keyboard is on, because the focus stays in the
+         field: the user is typing, and taking the focus away to walk a list
+         would stop the typing. -->
+    <div id="palette" hidden>
+        <div id="palette-panel" role="dialog" aria-modal="true" aria-label="Command palette">
+            <input
+                id="palette-input"
+                type="text"
+                placeholder="Search commands"
+                autocomplete="off"
+                spellcheck="false"
+                role="combobox"
+                aria-expanded="true"
+                aria-controls="palette-list"
+                aria-autocomplete="list"
+            >
+            <ul id="palette-list" role="listbox"></ul>
+        </div>
+    </div>
+    <!-- The top row, upstream's `App-menu_top`: three regions in a grid — the
+         menu in the top-left corner, the tool island centered on the window,
+         and the right-hand buttons closing the row. Each region is one child,
+         because each region is what the grid places. -->
+    <div id="top-bar">
+        <div id="canvas-menu">
+            <!-- The trigger is upstream's hamburger island. The drawing is
+                 installed from the iconary (`client/canvas-menu.mjs`) so there
+                 is one copy of it, and the button's name is its `aria-label`,
+                 not the picture. -->
+            <button id="canvas-menu-trigger" type="button" aria-label="Canvas menu" title="Canvas menu" aria-haspopup="menu" aria-expanded="false" aria-controls="canvas-menu-panel"></button>
+            <!-- The panel is empty in the markup: `client/canvas-menu.mjs` builds
+                 upstream's rows — file actions, the command views and the
+                 preferences — from one table, before anything that queries a
+                 row (the theme binder, the document binders and the image
+                 importer). A hand-written row would be a second place where a
+                 command is named. -->
+            <section id="canvas-menu-panel" class="dropdown-menu" role="menu" aria-label="Canvas menu" hidden></section>
+            <!-- The hint upstream hangs under the menu, pointing at it. -->
+            <div id="welcome-screen-menu-hint" data-visible="false"></div>
+        </div>
+        <div id="toolbar">
+            <!-- The tool toolbar. It is empty on purpose: `client/tool-toolbar.mjs`
+                 builds one button per row of `TOOL_BUTTONS`, so the tools are
+                 named in one table instead of once here and once in the client.
+                 A hand-written row would be one chance per tool to spell a name
+                 the keyboard refuses, and that failure is silent. -->
+            <div id="tool-toolbar" role="group" aria-label="Drawing tools">
+                <!-- The contextual hint: upstream mounts it INSIDE the tool
+                     island, as the island's first child (`Toolbar.tsx`:
+                     `<HintViewer>` before the Stack), and draws the shortcut as
+                     a `<kbd>`. `client/help.mjs` builds the span and the kbd,
+                     and the island's own width is what centers the sentence. -->
+                <div id="tool-hint" class="HintViewer" role="status" aria-live="polite" hidden></div>
+                <!-- The hint upstream hangs under the tool island, pointing at
+                     it. It lives inside the island because the island is the
+                     containing block upstream gives it (`LayerUI.tsx`). -->
+                <div id="welcome-screen-toolbar-hint" data-visible="false"></div>
+            </div>
+            <!-- The style panel: upstream's selected-shape actions (`Actions.tsx`).
+                 On a desktop it is one island in a single column, under the canvas
+                 menu; on a phone it is the reference's horizontal style row
+                 (`.mobile-shape-actions`), the row that carries the undo/redo
+                 above the tool island. It is the same element in both, and the
+                 two placements are the one thing the phone's stylesheet changes.
+                 Every section is a `fieldset > legend + buttonList`. The order is
+                 upstream's: stroke, background, fill, width, style, sloppiness,
+                 edges, the arrow type, the text group, the vertical alignment,
+                 the arrowheads, opacity, the layer controls, the alignments and
+                 the actions. Which of them are up is the selection's and the
+                 tool's (`client/style-panel.mjs`). -->
+            <section id="style-panel" role="group" aria-label="Styles" hidden>
+                <div id="style-rows">
+                    <fieldset class="style-row" data-panel-section="stroke">
+                        <legend id="style-stroke-legend">Stroke</legend>
+                        <div id="stroke-colour-row" role="group" aria-label="Stroke colour">
+                            <label for="stroke-colour" class="visually-hidden">Stroke</label>
+                            <input id="stroke-colour" type="text" maxlength="9" spellcheck="false" />
+                        </div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="background">
+                        <legend id="style-background-legend">Background</legend>
+                        <div id="background-colour-row" role="group" aria-label="Background colour">
+                            <label for="background-colour" class="visually-hidden">Background</label>
+                            <input id="background-colour" type="text" maxlength="11" spellcheck="false" />
+                        </div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="fill">
+                        <legend id="style-fill-legend">Fill</legend>
+                        <!-- Four-state fill control. Each button carries the wire token
+                             the kernel expects (`solid` / `hachure` / `cross-hatch` /
+                             `zigzag`), so the click handler reads `data-fill` and
+                             forwards it to `setStyle` as the `fill` property of the
+                             patch. The "active" state is driven by `fillStyleOf` on
+                             the first selected id, refreshed every paint. A
+                             multi-selection whose fills disagree is told out loud: the
+                             kernel answers `mixed`, no button lights, and the row
+                             waits for the click that settles it. -->
+                        <div id="fill-buttons" class="buttonList" role="group" aria-label="Fill style">
+                            <button type="button" data-fill="hachure" title="Hachure fill">Hachure</button>
+                            <button type="button" data-fill="cross-hatch" title="Cross-hatch fill">Cross-hatch</button>
+                            <button type="button" data-fill="solid" title="Solid fill">Solid</button>
+                        </div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="width">
+                        <legend id="style-width-legend">Stroke width</legend>
+                        <div id="line-width-buttons" role="group" aria-label="Stroke width">
+                            <button type="button" data-line-width="thin" title="Thin stroke">Thin</button>
+                            <button type="button" data-line-width="medium" title="Medium stroke">Medium</button>
+                            <button type="button" data-line-width="bold" title="Bold stroke">Bold</button>
+                            <span data-style-mixed hidden>mixed</span>
+                        </div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="strokeStyle">
+                        <legend id="style-stroke-style-legend">Stroke style</legend>
+                        <div id="stroke-buttons" role="group" aria-label="Stroke style">
+                            <button type="button" data-stroke="solid" title="Solid stroke">Solid</button>
+                            <button type="button" data-stroke="dashed" title="Dashed stroke">Dashed</button>
+                            <button type="button" data-stroke="dotted" title="Dotted stroke">Dotted</button>
+                        </div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="sloppiness">
+                        <legend id="style-sloppiness-legend">Sloppiness</legend>
+                        <div id="roughness-buttons" role="group" aria-label="Sketch level">
+                            <button type="button" data-roughness="architect" title="Architect: ruled lines">Architect</button>
+                            <button type="button" data-roughness="artist" title="Artist: the default">Artist</button>
+                            <button type="button" data-roughness="cartoonist" title="Cartoonist: the corners wander">Cartoonist</button>
+                        </div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="edges">
+                        <legend id="style-edges-legend">Edges</legend>
+                        <div id="edges-buttons" role="group" aria-label="Corners">
+                            <button type="button" data-edges="sharp" title="Sharp corners">Sharp</button>
+                            <button type="button" data-edges="round" title="Round corners">Round</button>
+                        </div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="arrowType">
+                        <legend id="style-arrow-type-legend">Arrow type</legend>
+                        <div id="arrow-type-row" role="group" aria-labelledby="style-arrow-type-legend"></div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="fontFamily">
+                        <legend id="style-font-family-legend">Font family</legend>
+                        <div id="text-family-row" role="group" aria-labelledby="style-font-family-legend"></div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="fontSize">
+                        <legend id="style-font-size-legend">Font size</legend>
+                        <div id="text-size-row" role="group" aria-labelledby="style-font-size-legend">
+                            <label for="text-size" class="visually-hidden">Size</label>
+                            <input id="text-size" type="text" inputmode="numeric" maxlength="3" spellcheck="false" />
+                        </div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="textAlign">
+                        <legend id="style-text-align-legend">Text align</legend>
+                        <div id="text-align-row" role="group" aria-labelledby="style-text-align-legend"></div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="verticalAlign">
+                        <legend id="style-vertical-align-legend">Vertical align</legend>
+                        <div id="text-vertical-row" role="group" aria-labelledby="style-vertical-align-legend"></div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="arrowheads">
+                        <legend id="style-arrowheads-legend">Arrowheads</legend>
+                        <div id="arrow-heads-row" role="group" aria-labelledby="style-arrowheads-legend"></div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="opacity">
+                        <legend id="style-opacity-legend">Opacity</legend>
+                        <div id="opacity-row" role="group" aria-label="Opacity">
+                            <label for="opacity" class="visually-hidden">Opacity</label>
+                            <input id="opacity" type="range" min="0" max="100" step="10" value="100" />
+                            <output id="opacity-value" for="opacity">100</output>
+                        </div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="layers">
+                        <legend id="style-layers-legend">Layers</legend>
+                        <div id="layers-row" class="buttonList" role="group" aria-labelledby="style-layers-legend"></div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="align">
+                        <legend id="style-align-legend">Align</legend>
+                        <div id="align-row" class="buttonList" role="group" aria-labelledby="style-align-legend"></div>
+                    </fieldset>
+                    <fieldset class="style-row" data-panel-section="actions">
+                        <legend id="style-actions-legend">Actions</legend>
+                        <div id="actions-row" class="buttonList" role="group" aria-labelledby="style-actions-legend"></div>
+                    </fieldset>
+                </div>
+            </section>
+        </div>
+        <div id="top-right">
+            <!-- The two buttons upstream keeps in the top-right corner, in its
+                 order (`LayerUI.tsx`: `renderTopRightUI` then the library
+                 trigger). The share trigger is the primary button, as
+                 upstream's is; the library one is an icon island. -->
+            <button type="button" data-share aria-label="Share" title="Share a link to this editor">Share</button>
+            <button type="button" data-library-trigger aria-label="Library" title="Library"></button>
+        </div>
+    </div>
+    <!-- The canvas footer is upstream's `Footer.tsx`: the zoom group and the
+         undo/redo group are two islands side by side in the bottom-left
+         corner, and the help button is the `?` in the bottom-right one. The
+         icons are not written here: `client/footer.mjs` puts the iconary's
+         drawings into the empty buttons, because a hand-copied SVG would be a
+         second copy of a drawing the generator owns. The history buttons have
+         no words for the same reason upstream's do not: their name is the
+         `aria-label`, and the drawing is what the eye reads. -->
+    <footer id="canvas-footer" aria-label="Canvas footer">
+        <div id="footer-left">
+            <div id="zoom-buttons" role="group" aria-label="Zoom">
+                <button type="button" data-zoom="out" aria-label="Zoom out" title="Zoom out (Ctrl+-)"></button>
+                <button type="button" data-zoom="reset" aria-label="Reset zoom" title="Reset the zoom to 100%">100%</button>
+                <button type="button" data-zoom="in" aria-label="Zoom in" title="Zoom in (Ctrl+=)"></button>
+            </div>
+            <div id="history-buttons" role="group" aria-label="History">
+                <button type="button" data-history="undo" aria-label="Undo" title="Undo (Cmd+Z)"></button>
+                <button type="button" data-history="redo" aria-label="Redo" title="Redo (Cmd+Shift+Z)"></button>
+            </div>
+        </div>
+        <div id="footer-right">
+            <!-- The hint upstream hangs above the help button, pointing at it. -->
+            <div id="welcome-screen-help-hint" data-visible="false"></div>
+            <button type="button" data-help aria-label="Keyboard shortcuts and help" title="Keyboard shortcuts and help — ?"></button>
+        </div>
+    </footer>
+
+    <div id="status" role="status"></div>
+    <dialog id="clear-canvas-dialog" class="sheet"></dialog>
+    <dialog id="tab-conflict-dialog" class="sheet"></dialog>
+    <!-- The text-edit layer is a transparent overlay sized to the canvas
+         that hosts the inline `<textarea>` of H5.11. `pointer-events:
+         none` is the default so the layer does not eat the clicks it
+         does not want; the editor itself re-enables them on its own
+         element. -->
+    <div id="text-edit-layer" aria-hidden="true"></div>
+    <script type="module" src="./client/index.js"></script>
+</body>
+</html>
