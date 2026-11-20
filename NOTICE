@@ -1,0 +1,131 @@
+NextDraw v0.6.29 — third-party notice
+
+This distribution contains the compiled Rust workspace of NextDraw, which is
+published under the MIT licence; the text is the file LICENSE beside this
+notice.
+
+The compiled kernel embeds the third-party crates listed below. Each one is
+used under the licence named next to it, and its copyright notice and
+licence text are those of its own authors, published with the crate itself.
+
+  bumpalo 3.20.3 — MIT OR Apache-2.0
+      https://github.com/fitzgen/bumpalo
+  byteorder 1.5.0 — Unlicense OR MIT
+      https://github.com/BurntSushi/byteorder
+  cfg-if 1.0.5 — MIT OR Apache-2.0
+      https://github.com/rust-lang/cfg-if
+  cobs 0.3.0 — MIT OR Apache-2.0
+      https://github.com/jamesmunns/cobs.rs
+  displaydoc 0.2.7 — MIT OR Apache-2.0
+      https://github.com/yaahc/displaydoc
+  embedded-io 0.4.0 — MIT OR Apache-2.0
+      https://github.com/embassy-rs/embedded-io
+  embedded-io 0.6.1 — MIT OR Apache-2.0
+      https://github.com/rust-embedded/embedded-hal
+  form_urlencoded 1.2.2 — MIT OR Apache-2.0
+      https://github.com/servo/rust-url
+  hash32 0.2.1 — MIT OR Apache-2.0
+      https://github.com/japaric/hash32
+  heapless 0.7.17 — MIT OR Apache-2.0
+      https://github.com/japaric/heapless
+  icu_collections 2.4.0 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  icu_locale_core 2.4.0 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  icu_normalizer 2.4.0 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  icu_normalizer_data 2.4.0 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  icu_properties 2.4.0 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  icu_properties_data 2.4.0 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  icu_provider 2.4.0 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  idna 1.1.0 — MIT OR Apache-2.0
+      https://github.com/servo/rust-url/
+  idna_adapter 1.2.2 — Apache-2.0 OR MIT
+      https://github.com/hsivonen/idna_adapter
+  itoa 1.0.18 — MIT OR Apache-2.0
+      https://github.com/dtolnay/itoa
+  litemap 0.8.3 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  memchr 2.8.3 — Unlicense OR MIT
+      https://github.com/BurntSushi/memchr
+  once_cell 1.21.4 — MIT OR Apache-2.0
+      https://github.com/matklad/once_cell
+  percent-encoding 2.3.2 — MIT OR Apache-2.0
+      https://github.com/servo/rust-url/
+  postcard 1.1.3 — MIT OR Apache-2.0
+      https://github.com/jamesmunns/postcard
+  potential_utf 0.1.6 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  proc-macro2 1.0.107 — MIT OR Apache-2.0
+      https://github.com/dtolnay/proc-macro2
+  quote 1.0.47 — MIT OR Apache-2.0
+      https://github.com/dtolnay/quote
+  rustc_version 0.4.1 — MIT OR Apache-2.0
+      https://github.com/djc/rustc-version-rs
+  rustversion 1.0.23 — MIT OR Apache-2.0
+      https://github.com/dtolnay/rustversion
+  semver 1.0.28 — MIT OR Apache-2.0
+      https://github.com/dtolnay/semver
+  serde 1.0.229 — MIT OR Apache-2.0
+      https://github.com/serde-rs/serde
+  serde_core 1.0.229 — MIT OR Apache-2.0
+      https://github.com/serde-rs/serde
+  serde_derive 1.0.229 — MIT OR Apache-2.0
+      https://github.com/serde-rs/serde
+  serde_json 1.0.154 — MIT OR Apache-2.0
+      https://github.com/serde-rs/json
+  smallvec 1.16.4 — MIT OR Apache-2.0
+      https://github.com/servo/rust-smallvec
+  stable_deref_trait 1.2.1 — MIT OR Apache-2.0
+      https://github.com/storyyeller/stable_deref_trait
+  syn 3.0.9 — MIT OR Apache-2.0
+      https://github.com/dtolnay/syn
+  synstructure 0.14.0 — MIT
+      https://github.com/mystor/synstructure
+  thiserror 2.0.21 — MIT OR Apache-2.0
+      https://github.com/dtolnay/thiserror
+  thiserror-impl 2.0.21 — MIT OR Apache-2.0
+      https://github.com/dtolnay/thiserror
+  tinystr 0.8.5 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  unicode-ident 1.0.27 — (MIT OR Apache-2.0) AND Unicode-3.0
+      https://github.com/dtolnay/unicode-ident
+  url 2.5.8 — MIT OR Apache-2.0
+      https://github.com/servo/rust-url
+  utf8_iter 1.1.0 — Apache-2.0 OR MIT
+      https://github.com/hsivonen/utf8_iter
+  utf_types 1.0.0 — Apache-2.0 OR MIT
+      https://github.com/hsivonen/utf_types
+  wasm-bindgen 0.2.129 — MIT OR Apache-2.0
+      https://github.com/wasm-bindgen/wasm-bindgen
+  wasm-bindgen-macro 0.2.129 — MIT OR Apache-2.0
+      https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/macro
+  wasm-bindgen-macro-support 0.2.129 — MIT OR Apache-2.0
+      https://github.com/wasm-bindgen/wasm-bindgen/tree/main/crates/macro-support
+  wasm-bindgen-shared 0.2.129 — MIT OR Apache-2.0
+      https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/shared
+  writeable 0.6.4 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  yoke 0.8.4 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  yoke-derive 0.8.4 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  zerofrom 0.1.8 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  zerofrom-derive 0.1.8 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  zerotrie 0.2.5 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  zerovec 0.11.9 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  zerovec-derive 0.11.7 — Unicode-3.0
+      https://github.com/unicode-org/icu4x
+  zmij 1.0.23 — MIT
+      https://github.com/dtolnay/zmij
+
+The application this project is compared against is not part of this
+distribution and contributes no code to it.
