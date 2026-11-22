@@ -33,7 +33,13 @@
 // refusal is the pipeline's to report.
 
 import { GESTURES } from "../gesture.mjs";
-import { TOOLS, linearDragIsLongEnough, shapeJsonFor } from "../tools.mjs";
+import {
+  TOOLS,
+  arrowHeadBirthFor,
+  birthStyleFor,
+  linearDragIsLongEnough,
+  shapeJsonFor,
+} from "../tools.mjs";
 
 /**
  * The tools whose drag builds the element as a **box**, and so the only ones
@@ -77,14 +83,30 @@ function snappedEnd(session, tool, to) {
 /**
  * @param {string} tool The draw tool in hand.
  * @param {Point} startScreen Where the pointer went down.
- * @param {{ id: string, seed: number, arrowType?: string, created?: number }} identity The element's
+ * @param {{ id: string, seed: number, arrowType?: string, created?: number, style?: object | null }} identity The element's
  *   identity, minted by the caller at the press: the id the commit will insert under,
  *   the seed the sketch wobbles with, and the arrow kind the tool was holding. The
  *   preview and the commit carry the same three, so what the user watched grow is
- *   what lands.
+ *   what lands. `style` is the drawing preferences' snapshot (TASK-295); it is
+ *   **resolved here, once**, into the frozen birth style the document is written with,
+ *   so no later moment of this gesture ever asks the store again — which is what makes a
+ *   colour picked mid-drag belong to the next element and not to this one.
  * @returns {object} The payload for a new gesture, without its owners.
  */
 export function start(tool, startScreen, identity) {
+    // The one read of the press's style, and the one translation from the selector's
+    // words to the document's. Absent (`null`, or a session with no preferences) is not
+    // a key on the gesture at all: the element is then born at the kernel's defaults,
+    // exactly as it was before the store existed.
+    const style = birthStyleFor(identity.style);
+    // The chosen heads ride the same press's style, and only for the arrow tool
+    // (TASK-297 AC1): the store's untouched end head names the *arrow's* kernel
+    // default, which is a head a line must not grow. The merge is two table reads
+    // on the already-frozen snapshot — once per press, never per move (AC6).
+    const heads = tool === TOOLS.arrow ? arrowHeadBirthFor(identity.style) : null;
+    const birth = style === null || heads === null || Object.keys(heads).length === 0
+        ? style
+        : Object.freeze({ ...style, ...heads });
     return {
         kind: GESTURES.DRAW,
         tool,
@@ -93,6 +115,7 @@ export function start(tool, startScreen, identity) {
         id: identity.id,
         seed: identity.seed,
         arrowType: identity.arrowType,
+        ...(birth === null ? {} : { style: birth }),
         ...(identity.created === undefined ? {} : { created: identity.created }),
     };
 }
@@ -150,7 +173,15 @@ export function commit(session, gesture, release, { pointerType, bindingOff = fa
             to = [origin[0] + size, origin[1] + size];
         } else {
             if (straight && pointerType !== "touch") {
-                return { kind: "multipoint", from: { x: from[0], y: from[1] } };
+                // The click-by-click mode inherits this gesture's birth style (AC3): the
+                // press that opened the mode is the press the style was read at, and the
+                // clicks that follow only add corners. A colour picked between them belongs
+                // to the next drawing.
+                return {
+                    kind: "multipoint",
+                    from: { x: from[0], y: from[1] },
+                    ...(gesture.style === undefined ? {} : { style: gesture.style }),
+                };
             }
             return { kind: "tiny" };
         }
@@ -172,7 +203,14 @@ export function commit(session, gesture, release, { pointerType, bindingOff = fa
         gesture.id,
         { x: origin[0], y: origin[1] },
         { x: to[0], y: to[1] },
-        { arrowType: gesture.arrowType, seed: gesture.seed, created: gesture.created },
+        {
+            arrowType: gesture.arrowType,
+            seed: gesture.seed,
+            created: gesture.created,
+            // The press's style, resolved and frozen on the gesture: the insert carries
+            // it in its own JSON, so no corrective write follows the creation (AC4).
+            style: gesture.style,
+        },
     );
     if (json === null) {
         return { kind: "tiny" };
@@ -227,6 +265,13 @@ export function preview(session, gesture) {
         gesture.id,
         { x: from[0], y: from[1] },
         { x: to[0], y: to[1] },
-        { arrowType: gesture.arrowType, seed: gesture.seed, created: gesture.created },
+        {
+            arrowType: gesture.arrowType,
+            seed: gesture.seed,
+            created: gesture.created,
+            // The same frozen object the commit passes: the preview cannot show a style the
+            // release will not land, because neither of them reads anything new (AC2).
+            style: gesture.style,
+        },
     );
 }

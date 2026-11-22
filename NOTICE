@@ -1,4 +1,4 @@
-NextDraw v0.6.29 — third-party notice
+NextDraw v0.7.0 — third-party notice
 
 This distribution contains the compiled Rust workspace of NextDraw, which is
 published under the MIT licence; the text is the file LICENSE beside this
@@ -22,7 +22,7 @@ licence text are those of its own authors, published with the crate itself.
       https://github.com/embassy-rs/embedded-io
   embedded-io 0.6.1 — MIT OR Apache-2.0
       https://github.com/rust-embedded/embedded-hal
-  form_urlencoded 1.2.2 — MIT OR Apache-2.0
+  form_urlencoded 1.2.3 — MIT OR Apache-2.0
       https://github.com/servo/rust-url
   hash32 0.2.1 — MIT OR Apache-2.0
       https://github.com/japaric/hash32
@@ -94,7 +94,7 @@ licence text are those of its own authors, published with the crate itself.
       https://github.com/unicode-org/icu4x
   unicode-ident 1.0.27 — (MIT OR Apache-2.0) AND Unicode-3.0
       https://github.com/dtolnay/unicode-ident
-  url 2.5.8 — MIT OR Apache-2.0
+  url 2.5.9 — MIT OR Apache-2.0
       https://github.com/servo/rust-url
   utf8_iter 1.1.0 — Apache-2.0 OR MIT
       https://github.com/hsivonen/utf8_iter

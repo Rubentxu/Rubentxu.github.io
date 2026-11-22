@@ -8,8 +8,10 @@
 //
 // The seam is one factory. `createClipboardUseCase` takes the canvas (the
 // raster a shared picture is rendered at), the status line and its render,
-// the paint, and the chart dialog the spreadsheet paste asks its question
-// through, and answers with the two verbs the command registry dispatches.
+// the paint, the chart dialog the spreadsheet paste asks its question
+// through, and the kernel's answer about an embeddable address (the paste's
+// third road reads that answer instead of holding a list of its own), and
+// answers with the two verbs the command registry dispatches.
 // The kernel contract is untouched: both verbs make the same `session.*`
 // calls they made when they lived in the coordinator.
 
@@ -41,9 +43,18 @@ import { isRefusal } from "./gesture-pipeline.mjs";
  * @param {(session: object, ctx: object) => void} page.paint paints the scene.
  * @param {Element} page.chartDialog the dialog the spreadsheet paste asks through.
  * @param {(key: string, source: string) => string} [page.text] the words the dialog writes.
+ * @param {(link: string) => ({render?: boolean} | boolean)} [page.embeddablePolicy] the kernel's answer about an address, as the mounted page reads it.
  * @returns {object} the two verbs the command registry dispatches.
  */
-export function createClipboardUseCase({ canvas, statusLine, renderStatus, paint, chartDialog, text }) {
+export function createClipboardUseCase({
+    canvas,
+    statusLine,
+    renderStatus,
+    paint,
+    chartDialog,
+    text,
+    embeddablePolicy,
+}) {
     async function pasteFromTheSystem(session, ctx, at) {
         try {
             // A picture the system holds is the paste's first answer: a screenshot
@@ -107,7 +118,7 @@ export function createClipboardUseCase({ canvas, statusLine, renderStatus, paint
                     // The chart's labels are measured on the canvas that draws the
                     // chart: the reference asks its render environment for the same
                     // metrics, and a label's width is half of where the next one sits.
-                    const measure = createChartMeasure(ctx);
+                    const measure = createChartMeasure();
                     const elements =
                         answer === "bar"
                             ? barChartElements(sheet.data, { x: at[0], y: at[1] }, measure)
@@ -137,7 +148,7 @@ export function createClipboardUseCase({ canvas, statusLine, renderStatus, paint
                 renderStatus();
             }
             // Pure embeddable URLs: when every non-empty line of the system's
-            // text is a URL the table admits, the paste becomes one web embed
+            // text is a URL the kernel admits, the paste becomes one web embed
             // per line instead of a text — a link copied from the browser's
             // address bar is a frame on the canvas, not a label
             // (`App.clipboard.ts:236-279`, the pinned clone). The road reads
@@ -147,10 +158,14 @@ export function createClipboardUseCase({ canvas, statusLine, renderStatus, paint
             // the reference measures (`App.tsx:8423-8424`) and stores the URL
             // as it was pasted (`:8425`); the next one sits one embed and a
             // gutter of 20 to the right (`App.clipboard.ts:258-260`). The
-            // kernel owns what a stored link may name, so the URL goes over
-            // as it is.
+            // kernel owns which addresses are embeddable, so the page's answer
+            // (`embeddable_policy`, `crates/nextdraw-wasm/src/lib.rs`) crosses
+            // to the road as `embeddablePolicy`: a paste cannot open a road the
+            // render would refuse, and a page that supplies no answer embeds
+            // nothing. The URL itself goes over as it is, because the write
+            // frontier is the kernel's too.
             if (fromSystem !== null) {
-                const embeds = embeddableRoadFor(fromSystem);
+                const embeds = embeddableRoadFor(fromSystem, embeddablePolicy);
                 if (embeds !== null) {
                     const ids = [];
                     let prev = null;

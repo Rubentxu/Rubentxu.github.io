@@ -7,8 +7,9 @@
 // what kind of element is selected, and which tool is armed — and it is drawn
 // only while one of those answers says there is something to configure
 // (`showSelectedShapeActions`, `packages/element/src/showSelectedShapeActions.ts`).
-// The same call places it in the column under the top-left menu island
-// (`LayerUI.tsx:314-336`) and gives it its width and its ceiling.
+// Upstream placed it in a column under the top-left menu island
+// (`LayerUI.tsx:314-336`); the transit map gives it a home of its own — the
+// inspector column on the sheet's right edge — and this module places it there.
 //
 // The page's markup carries the sections; this module owns the two facts the
 // markup cannot: which of them are up, and where the island sits. Keeping the
@@ -31,6 +32,8 @@
 // statistics panel (`components/Stats/`), a separate island with its own door;
 // inventing them here would show a control the reference does not have in this
 // place. The panel shows what `SelectedShapeActions` shows.
+
+import { linearPointsEditable } from "./vertex-edit.mjs";
 
 /**
  * The sections' order, as `Actions.tsx` renders them.
@@ -121,7 +124,7 @@ export const PANEL_COMMANDS = Object.freeze({
         "align:arrowdown",
         "distributeVertically",
     ]),
-    actions: Object.freeze(["duplicate", "delete", "group", "ungroup", "editLink", "cropArm", "editSelected"]),
+    actions: Object.freeze(["duplicate", "delete", "group", "ungroup", "editLink", "cropArm", "editLinearPoints"]),
 });
 
 /**
@@ -150,7 +153,11 @@ export const PANEL_ICONS = Object.freeze({
     ungroup: "UngroupIcon",
     editLink: "LinkIcon",
     cropArm: "cropIcon",
-    editSelected: "lineEditorIcon",
+    // The line editor's drawing stands for the verb that edits the line's
+    // points. `editSelected` keeps the Enter key and its label, not this icon:
+    // a panel button that fabricates a double click says one thing and does
+    // another (`run-command.mjs`).
+    editLinearPoints: "lineEditorIcon",
 });
 
 /**
@@ -246,30 +253,35 @@ export function panelSections({ tool, kinds = [], styles = null, selectionCount 
 }
 
 /**
- * Where the island sits and how tall it may grow.
+ * Where the inspector column sits and how tall it may grow.
  *
- * Upstream's column puts the menu at `(16, 16)` and the island below it with a
- * 24 px gap — the `Stack.Col` gap in `LayerUI.tsx`, not the 8 px a reader might
- * guess from the drawn result. The ceiling is `height - 166`, the room above
- * the footer (`LayerUI.tsx:265-273`), and the width is the island's own 195 px
- * (`max-width: 12.5rem` plus its border box). The width lives in the page's
- * stylesheet because it is layout; the numbers that depend on the running
- * viewport are here.
+ * The map's inspector is an edge of the sheet, not a guest of a toolbar: it
+ * starts under the 48 px band, stops above the 24 px status strip, and is
+ * measured from the window's right edge. The column's width (280 px, the
+ * contract's) lives in the page's stylesheet because it is layout; the numbers
+ * that depend on the running viewport are here.
  *
  * A phone has no island to place: the same element is the bottom bar's style
  * row there, and the stylesheet puts it (`index.html`). This function is the
  * desktop's answer and says nothing about the phone.
  *
  * @param {object} state The answers.
- * @param {{left: number, bottom: number}} state.menuRect The menu island's box.
+ * @param {number} state.viewportWidth The window's inner width.
  * @param {number} state.viewportHeight The window's inner height.
+ * @param {number} [state.width] The inspector column's width.
+ * @param {number} [state.band] The top band's height.
+ * @param {number} [state.strip] The status strip's height.
  * @returns {{left: number, top: number, maxHeight: number}} The box to write.
  */
-export function panelPlacement({ menuRect, viewportHeight }) {
+export function panelPlacement({ viewportWidth, viewportHeight, width = 280, band = 48, strip = 24 }) {
+    // The inspector column (TASK-285): flush with the right edge of the sheet,
+    // running from the band down to the status strip. It is placed by the
+    // window, not by the menu's box, because the map's inspector is an edge of
+    // the sheet and not a guest of a toolbar.
     return {
-        left: Math.round(menuRect.left),
-        top: Math.round(menuRect.bottom + 24),
-        maxHeight: Math.max(0, Math.round(viewportHeight - 166)),
+        left: Math.round(viewportWidth - width),
+        top: band,
+        maxHeight: Math.max(0, Math.round(viewportHeight - band - strip)),
     };
 }
 
@@ -278,7 +290,8 @@ export function panelPlacement({ menuRect, viewportHeight }) {
  *
  * `sync(styles)` is the frame's call, beside the style rows' own: it reads the
  * selection and the armed tool, flips every section's `hidden`, and puts the
- * island under the menu. It is one function because the facts move together —
+ * column on the sheet's right edge. It is one function because the facts move
+ * together —
  * a panel whose box moved but whose rows did not is a panel showing a
  * selection the kernel has already outlived.
  *
@@ -289,9 +302,8 @@ export function panelPlacement({ menuRect, viewportHeight }) {
  * section whose legend is.
  *
  * @param {object} options The binder's surfaces.
- * @param {Element} options.root The `#style-panel` island.
- * @param {Element} options.menu The top-left menu island, the box it hangs from.
- * @param {object} options.view The window (its height and resize event).
+ * @param {Element} options.root The `#style-panel` inspector column.
+ * @param {object} options.view The window (its box and resize event).
  * @param {object} options.session The kernel: `selectedIds` and `kindOf`.
  * @param {{currentTool: string}} options.toolState The armed tool.
  * @param {(id: string) => void} options.runCommand The page's one verb door.
@@ -304,7 +316,6 @@ export function panelPlacement({ menuRect, viewportHeight }) {
  */
 export function bindStylePanel({
     root,
-    menu,
     view,
     session,
     toolState,
@@ -365,14 +376,12 @@ export function bindStylePanel({
             root.style.removeProperty("max-height");
             return;
         }
-        if (typeof menu?.getBoundingClientRect !== "function") {
-            return;
-        }
         const height = Number(view?.innerHeight);
-        if (!Number.isFinite(height) || height <= 0) {
+        const width = Number(view?.innerWidth);
+        if (!Number.isFinite(height) || height <= 0 || !Number.isFinite(width) || width <= 0) {
             return;
         }
-        const box = panelPlacement({ menuRect: menu.getBoundingClientRect(), viewportHeight: height });
+        const box = panelPlacement({ viewportWidth: width, viewportHeight: height });
         root.style.setProperty("left", `${box.left}px`);
         root.style.setProperty("top", `${box.top}px`);
         root.style.setProperty("max-height", `${box.maxHeight}px`);
@@ -420,8 +429,23 @@ export function bindStylePanel({
             const only = selectionCount === 1 ? kinds[0] : null;
             const crop = built.get("actions")?.get("cropArm");
             if (crop !== undefined) crop.hidden = only !== "image";
-            const editor = built.get("actions")?.get("editSelected");
-            if (editor !== undefined) editor.hidden = only !== "line" && only !== "arrow";
+            // The line editor's row is the semantic verb's, not Enter's: it is
+            // up for a lone line or a lone arrow the kernel does not bend, and
+            // its rule is the double click's own, read without the pointer
+            // (`vertex-edit.mjs`). A stale id that answers no kind is no
+            // selection to edit: the row hides itself.
+            const editor = built.get("actions")?.get("editLinearPoints");
+            if (editor !== undefined) {
+                let editable = false;
+                if (selectionCount === 1) {
+                    try {
+                        editable = linearPointsEditable(session, ids[0]);
+                    } catch {
+                        editable = false;
+                    }
+                }
+                editor.hidden = !editable;
+            }
             // Grouping takes two; a single element has nothing to group or
             // ungroup, and upstream's action predicates hide both there.
             for (const id of ["group", "ungroup"]) {

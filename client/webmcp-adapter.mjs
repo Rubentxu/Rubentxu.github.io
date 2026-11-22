@@ -16,11 +16,18 @@ export const WEBMCP_WRITE_TOOLS = Object.freeze(["selectElements", "placeRelativ
 /**
  * The host's model context, when it speaks a registration API we know.
  *
+ * The anchor moved: the host Chrome 157 exposes (TASK-278 s2, evidence
+ * `docs/evidence/task-278-webmcp-host.md`) is `document.modelContext`, not the
+ * `navigator.modelContext` of the early dev preview. The navigator is still
+ * asked first so a host that anchors there keeps working; `document` is only
+ * consulted when the caller is asking about the live page (no fake `nav`).
+ *
  * @param {object} [nav] the navigator to read.
  * @returns {object|null}
  */
 export function detectModelContext(nav = globalThis.navigator) {
-    const context = nav?.modelContext;
+    const context = nav?.modelContext
+        ?? (nav === globalThis.navigator ? globalThis.document?.modelContext : undefined);
     if (context === undefined || context === null) {
         return null;
     }
@@ -210,6 +217,11 @@ export function createWebMcpAdapter({
         },
     ];
 
+    // The Chrome 157 host knows no `unregisterTool` and no `provideContext`
+    // (TASK-278 s2): the door to leaving nothing behind is the `signal` the
+    // registration takes and an abort closes. The other dialects keep theirs.
+    let registration = null;
+
     const stop = () => {
         if (typeof modelContext.unregisterTool === "function") {
             for (const name of offered) {
@@ -218,6 +230,8 @@ export function createWebMcpAdapter({
         } else if (typeof modelContext.provideContext === "function") {
             modelContext.provideContext({ tools: [] });
         }
+        registration?.abort();
+        registration = null;
         active = false;
     };
 
@@ -237,8 +251,12 @@ export function createWebMcpAdapter({
             }
             const registering = wantsWrite ? [...definitions, ...writes] : definitions;
             if (typeof modelContext.registerTool === "function") {
+                registration = typeof AbortController === "function" ? new AbortController() : null;
                 for (const definition of registering) {
-                    modelContext.registerTool(definition);
+                    // A second argument a dialect does not know is dropped; the
+                    // Chrome 157 host honours this one and forgets the tool on
+                    // abort (the only clean exit it offers).
+                    modelContext.registerTool(definition, registration === null ? undefined : { signal: registration.signal });
                 }
             } else {
                 modelContext.provideContext({ tools: registering });

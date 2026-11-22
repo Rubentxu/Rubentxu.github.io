@@ -13,6 +13,7 @@
 
 import { applyDarkModeFilter, swatchNeedsOutline } from "./dark-colour.mjs";
 import { stylePatch } from "./style-toolbar.mjs";
+import { createStylePreferences } from "./style-preferences.mjs";
 
 /**
  * The swatches of each ink, as upstream's palette lists them in its first row of each
@@ -54,13 +55,17 @@ export function normaliseColour(text) {
  *
  * `sync(styles)` lights the swatch whose colour the whole selection shares and fills
  * the entry with it. When the selection disagrees (`"mixed"`) nothing is lit and the
- * row says `data-mixed`; with nothing selected the row hides.
+ * row says `data-mixed`; with nothing selected it shows the instance's preferred ink
+ * (`preferences`), which a click on an empty canvas writes without crossing to the
+ * kernel.
  *
  * @param {object} options
  * @param {Element} options.host the row; it holds the hex entry (`input`).
  * @param {"strokeColor" | "backgroundColor"} options.property the patch key it writes.
  * @param {object} options.session the frontier: `selectedIds()` and `setStyle(ids, patch)`.
  * @param {() => void} options.paintFn the repaint.
+ * @param {{get: Function, set: Function, snapshot: Function, adopt: Function}} options.preferences
+ *   this app instance's drawing preferences (`client/style-preferences.mjs`).
  * @param {(tag: string) => Element} options.createElement makes the swatches.
  * @param {(error: unknown) => void} [options.onError] the rejection path.
  * @param {AbortSignal} [options.signal] when it aborts, the listeners this binder added are removed.
@@ -75,6 +80,7 @@ export function bindColourPicker({
     property,
     session,
     paintFn,
+    preferences = createStylePreferences(),
     createElement,
     onError = (e) => {
         throw e;
@@ -93,13 +99,39 @@ export function bindColourPicker({
     }
     const write = (colour) => {
         const ids = session.selectedIds();
+        if (ids.length === 0) {
+            // Nothing to style: the click chose the default ink for the next
+            // creation. One store write and this row's refresh — no crossing,
+            // no history entry, no repaint.
+            preferences.set(property, colour);
+            show(preferences.snapshot());
+            return;
+        }
         try {
             session.setStyle(ids, stylePatch(property, colour));
         } catch (error) {
             onError(error);
             return;
         }
+        preferences.set(property, colour);
         paintFn();
+    };
+    /** Light the swatch the given styles name for this ink and fill the entry. */
+    const show = (styles) => {
+        const shared = styles[property];
+        const mixed = shared === "mixed";
+        if (mixed) {
+            host.setAttribute("data-mixed", "true");
+        } else {
+            host.removeAttribute("data-mixed");
+        }
+        for (const button of buttons) {
+            button.classList.toggle("is-active", button.getAttribute("data-colour") === shared);
+        }
+        if (!mixed && typeof shared === "string") {
+            entry.value = shared;
+            entry.removeAttribute("aria-invalid");
+        }
     };
     const buttons = swatches.map((colour) => {
         const button = createElement("button");
@@ -170,24 +202,11 @@ export function bindColourPicker({
                 shownDark = dark;
                 paintSwatches();
             }
-            host.hidden = styles === null;
-            if (styles === null) {
-                return;
-            }
-            const shared = styles[property];
-            const mixed = shared === "mixed";
-            if (mixed) {
-                host.setAttribute("data-mixed", "true");
-            } else {
-                host.removeAttribute("data-mixed");
-            }
-            for (const button of buttons) {
-                button.classList.toggle("is-active", button.getAttribute("data-colour") === shared);
-            }
-            if (!mixed && typeof shared === "string") {
-                entry.value = shared;
-                entry.removeAttribute("aria-invalid");
-            }
+            // With no selection the row shows the preferred ink rather than
+            // hiding, upstream's shape. The dark theme turns the *displayed*
+            // colour over (`paintSwatches`) and never the stored value, so a
+            // preference written under one theme reads the same under the other.
+            show(styles === null ? preferences.snapshot() : styles);
         },
     };
 }

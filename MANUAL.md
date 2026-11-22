@@ -1,7 +1,7 @@
 # Manual de NextDraw
 
 NextDraw es un editor de diagramas local-first: el dibujo vive en tu navegador,
-el documento es un fichero `.excalidraw` que puedes guardar, abrir y compartir, y
+el documento es un fichero `.nextdraw` que puedes guardar, abrir y compartir, y
 la aplicación no habla con ningún servidor que no sea el que la sirve y, si lo
 abres, la sala colaborativa que tú elijas.
 
@@ -13,11 +13,14 @@ tienes delante hace, no lo que una versión futura promete.
 ## Abrir, guardar y compartir
 
 - **Abrir** un dibujo: el botón *Abrir* o el menú del lienzo (☰) → *Abrir*. Acepta
-  ficheros `.excalidraw` y PNG con la escena incrustada. Si el dibujo en pantalla
-  tiene cambios sin guardar, se te pide confirmación antes de sustituirlo.
+  ficheros `.nextdraw`, ficheros `.excalidraw` y PNG con la escena incrustada. Si
+  el dibujo en pantalla tiene cambios sin guardar, se te pide confirmación antes de
+  sustituirlo.
 - **Guardar**: el botón *Guardar* descarga el documento actual como
-  `nextdraw.excalidraw`. El guardado automático mantiene además una copia en el
-  navegador: si cierras la pestaña, el dibujo sigue ahí la próxima vez.
+  `nextdraw.nextdraw`. El fichero lleva dentro el mismo envelope que escribe
+  Excalidraw (`type` y `version`), así que **se abre también en Excalidraw**; lo
+  que cambia es el nombre del fichero. El guardado automático mantiene además una
+  copia en el navegador: si cierras la pestaña, el dibujo sigue ahí la próxima vez.
 - **Exportar**: *Exportar SVG* y *Exportar PNG* abren una hoja con resolución,
   fondo y margen; la exportación de una selección incluye sólo lo seleccionado.
 - **Biblioteca**: *Guardar biblioteca* conserva los elementos elegidos como una
@@ -106,6 +109,7 @@ en la interfaz.
 <!-- BEGIN shortcuts -->
 | Acción | Atajo |
 |---|---|
+| Abrir | `Ctrl+O` |
 | Acercar la vista | `Ctrl++` |
 | Agrupar | `Ctrl+G` |
 | Ajustar a la selección | `Shift+@` |
@@ -145,6 +149,7 @@ en la interfaz.
 | Escape | `Escape` |
 | Estadísticas | `Alt+/` |
 | Explorador accesible | `Alt+E` |
+| Fijar herramienta | `Q` |
 | Flecha | `A` |
 | Girar 90° a la derecha | `Shift+R` |
 | Girar 90° a la izquierda | `Ctrl+Shift+R` |
@@ -162,13 +167,13 @@ en la interfaz.
 | Mostrar selector de color de trazo | `S` |
 | Mostrar selector de fuentes | `Shift+F` |
 | Mover a la derecha | `ArrowRight` |
-| Mover a la derecha diez | `Shift+ArrowRight` |
+| Mover a la derecha cinco | `Shift+ArrowRight` |
 | Mover a la izquierda | `ArrowLeft` |
-| Mover a la izquierda diez | `Shift+ArrowLeft` |
+| Mover a la izquierda cinco | `Shift+ArrowLeft` |
 | Mover abajo | `ArrowDown` |
-| Mover abajo diez | `Shift+ArrowDown` |
+| Mover abajo cinco | `Shift+ArrowDown` |
 | Mover arriba | `ArrowUp` |
-| Mover arriba diez | `Shift+ArrowUp` |
+| Mover arriba cinco | `Shift+ArrowUp` |
 | Nota | `N` |
 | Pegar | `Ctrl+V` |
 | Pegar como texto sin formato | `Ctrl+Shift+V` |

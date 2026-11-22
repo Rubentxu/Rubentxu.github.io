@@ -38,12 +38,14 @@
             --accent-ink: #ffffff;
             /* The ink on the primary button (the top-right share trigger). */
             --on-primary: #ffffff;
-            /* The paper the drawing is on, and the welcome screen's wordmark
-               (upstream's `--color-logo-text`, `theme.scss`). */
+            /* The paper the drawing is on. The welcome wordmark rides the ink
+               since TASK-289: no logo token of its own. */
             --paper: #fafafa;
-            --welcome-logo-text: #190064;
-            --welcome-decor: #b8b8b8;
-            --welcome-muted: #999999;
+            /* The welcome greys are text, not filete: the detector measured
+               the old pair at 1.8:1 and 2.6:1 over the paper, so both now
+               clear WCAG AA (4.5:1) against `#f7f6f2` (TASK-285 s3). */
+            --welcome-decor: #6e6e6e;
+            --welcome-muted: #5c5c5c;
             --welcome-strong: #121212;
             /* What the theme does to the colours the canvas paints. The light
                theme does nothing.
@@ -95,9 +97,10 @@
             --accent-ink: #0b1020;
             --on-primary: #ffffff;
             --paper: #121212;
-            --welcome-logo-text: #e2dfff;
-            --welcome-decor: #7a7a7a;
-            --welcome-muted: #7a7a7a;
+            /* Same rule at night: the old #7a7a7a measured 4.36:1 on the dark
+               paper, under AA; both greys now clear it (TASK-285 s3). */
+            --welcome-decor: #909090;
+            --welcome-muted: #a3a3a3;
             --welcome-strong: #f5f5f5;
             --theme-filter: invert(93%) hue-rotate(180deg);
             --alert: #ff8a8a;
@@ -113,7 +116,10 @@
             height: 100%;
             background: var(--bg);
             color: var(--ink);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            /* The chrome's voice is the humanist sans the token installs
+               (TASK-285); the token arrives with `installChromeTokens`, so the
+               stack keeps the old system faces as its fallback. */
+            font-family: var(--ui-font, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
             overflow: hidden;
         }
         /* The paper lives on the wrapper, and the canvas carries no filter.
@@ -289,6 +295,10 @@
             align-self: flex-end;
             padding: 6px 12px;
         }
+        /* The chart offer: the same floating sheet the link editor wears, one
+           input shorter (TASK-285 restored the selector the orphan block had
+           lost). */
+        #chart-dialog {
             position: fixed;
             z-index: 6;
             display: flex;
@@ -703,41 +713,55 @@
             color: color-mix(in srgb, var(--ink) 55%, transparent);
             cursor: default;
         }
-        /* Shell chrome floats over the drawing. Upstream draws the top row as
-           a three-column grid — `LayerUI.tsx`'s `App-menu_top`, columns
-           1fr 2fr 1fr with a 1rem gap below 1536px and 1fr 1fr 1fr with 3rem
-           above it (`css/styles.scss`) — inside a fixed box whose inset is the
-           editor container's padding. The menu is the left column, the tool
-           island is centered in the middle one, and the right-hand buttons
-           close the row. The grid is what makes the island's centre the
-           window's centre without a magic number: 1440 wide, the middle track
-           is 688px from 376 to 1064, and a 542px island centered in it starts
-           at 449 — the reference's own box. */
+        /* Shell chrome is the transit map's sheet (TASK-285): the band above the
+           drawing is 48 px of paper with a one-pixel rule underneath, the tool
+           line runs down the left edge, and the status strip closes the sheet at
+           the bottom. The band carries the three regions upstream's row carries
+           — the menu and the label at the left, the tools (pulled into the rail
+           below), the right-hand buttons at the end — so every control keeps its
+           name, its wiring and its order; only the sheet they are printed on
+           changed. */
         #top-bar {
             position: fixed;
-            top: var(--editor-container-padding);
-            left: var(--editor-container-padding);
-            right: var(--editor-container-padding);
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
             display: grid;
-            grid-template-columns: 1fr 2fr 1fr;
-            grid-gap: 1rem;
-            align-items: flex-start;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            column-gap: 1rem;
+            box-sizing: border-box;
+            padding: 0 var(--editor-container-padding);
+            background: var(--color-paper);
+            border-bottom: 1px solid var(--color-rule);
             z-index: 8;
             /* The row is a frame, not a surface: a click that misses a control
                belongs to the canvas. Every control opts back in. */
             pointer-events: none;
-        }
-        @media (min-width: 1536px) {
-            #top-bar {
-                grid-template-columns: 1fr 1fr 1fr;
-                grid-gap: 3rem;
-            }
         }
         #canvas-menu {
             grid-column: 1;
             justify-self: start;
             position: relative;
             pointer-events: auto;
+            /* The label reads first, the hamburger next: on the sheet, the
+               line carries its name before its controls. */
+            display: flex;
+            align-items: center;
+            column-gap: 12px;
+        }
+        /* The band's rótulo: the house's name in the chrome's own voice. It is
+           the band's left mark, set in the humanist sans at the 14 px step of
+           the 4 px scale, and it never takes the pointer. */
+        .nd-band-label {
+            font-family: var(--ui-font);
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: var(--color-on-surface, var(--ink));
+            user-select: none;
+            pointer-events: none;
         }
         #top-right {
             grid-column: 3;
@@ -1133,99 +1157,107 @@
         #canvas-menu-panel .dropdown-menu-separator {
             width: 100%;
         }
-        /* The middle column: the tool island, centered in the track, with the
-           contextual hint hanging under it. The column is only as wide as its
-           track — the island does not stretch — and the hint is centered on
-           the island's own centre. */
+        /* The tool line (TASK-285): the toolbar is not an island floating over
+           the drawing, it is the map's line — a 56 px column down the left
+           edge, its stations threaded on a one-pixel rule that runs the whole
+           height of the sheet. The line brightens when the pointer walks it,
+           the way a route brightens under a finger on a printed diagram. */
         #toolbar {
-            grid-column: 2;
-            position: relative;
+            position: fixed;
+            left: 0;
+            top: 48px;
+            bottom: 24px;
+            width: 56px;
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 12px;
+            box-sizing: border-box;
             min-width: 0;
             pointer-events: none;
+            z-index: 8;
         }
-        #tool-toolbar {
-            /* The hint is the island's own absolutely-positioned first child
-               (`Toolbar.tsx`), so the island is the containing block. */
-            position: relative;
-            pointer-events: auto;
+        #toolbar::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 12px;
+            bottom: 12px;
+            width: 1px;
+            background: var(--color-rule);
+            transition: background 120ms ease-out;
+        }
+        #toolbar:hover::before {
+            background: color-mix(in srgb, var(--color-line) 45%, var(--color-rule));
         }
         /* Upstream renders the pen-mode button only when a pen was detected
            (`Toolbar.tsx`: `<PenModeButton penDetected={...} />`). The port has
            no pen detection, so drawing the button would be a mouse-only lie:
            it is not shown, and the state behind it arrives with the detection
-           that makes the button true. Not drawing it also gives the island
-           upstream's 542px width — the box the reference's island has — which
-           is what centers it on the same pixels. */
+           that makes the button true. */
         #tool-toolbar > [data-pen-mode] { display: none; }
-        /* The footer is upstream's `Footer.tsx`: one bottom row whose left
-           corner holds the zoom group and the undo/redo group side by side,
-           and whose right corner holds the help button. The groups are the
-           reference's two islands (`.zoom-actions` and `.undo-redo-buttons`,
-           `Actions.scss`), not two rows stacked in one card. */
+        /* The footer is the map's status strip (TASK-285): a 24 px band closing
+           the sheet, its numbers set tabular at 11 px so a figure that changes
+           does not jump in its place. The controls keep their exact commands
+           and names; they lose the floating islands and gain the rule above
+           them, because the strip is part of the sheet and not a thing laid on
+           the drawing. */
         #canvas-footer {
             position: fixed;
             left: 0;
             right: 0;
-            bottom: var(--editor-container-padding);
+            bottom: 0;
+            height: 24px;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: space-between;
             box-sizing: border-box;
             padding: 0 var(--editor-container-padding);
+            background: var(--color-paper);
+            border-top: 1px solid var(--color-rule);
             pointer-events: none;
             z-index: 4;
         }
         #footer-left {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 0.6rem;
             pointer-events: none;
         }
-        /* The two groups are islands of their own: the surface-low plate and
-           the one-pixel ring upstream's `filledButtonOnCanvas` mixin draws.
-           The ring reads the island ink because the port's token table does
-           not carry `--color-surface-lowest`. */
+        /* The two groups are text on the strip: the plate and its ring belong
+           to islands, and the strip is not an island. */
         #history-buttons,
         #zoom-buttons {
             display: flex;
             align-items: center;
             pointer-events: auto;
-            background: var(--color-surface-low);
-            border-radius: var(--border-radius-lg);
-            box-shadow: 0 0 0 1px var(--island-bg-color);
+            background: transparent;
+            border-radius: 0;
+            box-shadow: none;
         }
         #history-buttons button,
         #zoom-buttons button {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: var(--lg-button-size);
-            height: var(--lg-button-size);
+            width: 24px;
+            height: 24px;
             padding: 0;
             border: 0;
-            border-radius: 0;
+            border-radius: var(--border-radius-md);
             background: transparent;
             color: var(--text-primary-color);
             font-family: var(--ui-font);
-            font-size: 0.875rem;
+            font-size: 11px;
             cursor: pointer;
         }
-        #zoom-buttons button[data-zoom="out"] {
-            border-top-left-radius: var(--border-radius-lg);
-            border-bottom-left-radius: var(--border-radius-lg);
-        }
-        #zoom-buttons button[data-zoom="in"] {
-            border-top-right-radius: var(--border-radius-lg);
-            border-bottom-right-radius: var(--border-radius-lg);
-        }
-        /* The readout is the middle button: upstream's 60-pixel
-           `.reset-zoom-button`, which is what makes the group 132 pixels. */
+        /* The readout keeps its own width — the figure is the point — and it is
+           set tabular so the percent signs do not shuffle when the zoom moves. */
         #zoom-buttons button[data-zoom="reset"] {
+            /* `Actions.scss:26` — the readout is 3.75rem wide, not the 24px of
+               its neighbours; the strip shrinks the station, not the figure. */
             width: 3.75rem;
-            padding: 0 0.625rem;
+            padding: 0 0.375rem;
             box-sizing: border-box;
             color: var(--text-primary-color);
             font-variant-numeric: tabular-nums;
@@ -1233,24 +1265,12 @@
         #zoom-buttons button[data-zoom="reset"]:hover:not(:active) {
             background: var(--button-hover-bg);
         }
-        /* The inner box is the ToolIcon's hover and disabled plate; upstream
-           makes it fill the button so the icon buttons tile the island. */
+        /* The inner box is the ToolIcon's hover and disabled plate; the strip's
+           buttons tile it at the station size. */
         #history-buttons .ToolIcon__icon,
         #zoom-buttons .ToolIcon__icon {
             width: 100%;
             height: 100%;
-        }
-        #zoom-buttons button[data-zoom="out"] .ToolIcon__icon {
-            border-top-left-radius: var(--border-radius-lg);
-            border-bottom-left-radius: var(--border-radius-lg);
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-        }
-        #zoom-buttons button[data-zoom="in"] .ToolIcon__icon {
-            border-top-right-radius: var(--border-radius-lg);
-            border-bottom-right-radius: var(--border-radius-lg);
-            border-top-left-radius: 0;
-            border-bottom-left-radius: 0;
         }
         #history-buttons button:disabled .ToolIcon__icon svg,
         #zoom-buttons button:disabled .ToolIcon__icon svg {
@@ -1260,11 +1280,11 @@
         #zoom-buttons button:disabled .ToolIcon__icon:hover {
             background: initial;
         }
-        /* The help button is upstream's `.help-icon`: the same surface-low
-           plate in the bottom-right corner, one drawing, no text. */
+        /* The help button is the strip's right end: the same drawing, printed
+           on the band instead of floating on a plate. */
         #footer-right {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: flex-end;
             pointer-events: none;
             /* The help hint hangs above the button, the way upstream's does
@@ -1275,20 +1295,20 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: var(--lg-button-size);
-            height: var(--lg-button-size);
+            width: 24px;
+            height: 24px;
             padding: 0;
             border: 0;
-            border-radius: var(--border-radius-lg);
-            background: var(--color-surface-low);
-            box-shadow: 0 0 0 1px var(--island-bg-color);
+            border-radius: var(--border-radius-md);
+            background: transparent;
+            box-shadow: none;
             color: var(--text-primary-color);
             cursor: pointer;
             pointer-events: auto;
         }
         #footer-right > .help-icon svg {
-            width: var(--lg-icon-size);
-            height: var(--lg-icon-size);
+            width: 14px;
+            height: 14px;
         }
         #footer-right > .help-icon:hover {
             background: var(--button-hover-bg);
@@ -1515,18 +1535,55 @@
             color: var(--accent-ink);
             border-color: var(--accent);
         }
-        /* The active drawing tool is drawn by the chrome's stylesheet
-           (`client/chrome.mjs`): the binder writes `aria-pressed` for the
-           assistive technology and `ToolIcon--checked` for the CSS, and the
-           checked rule reads the foundation's tokens — one state, one owner.
-           This page keeps only the row's own layout: upstream's toolbar is a
-           flex row (`Stack.Row`) with the quarter-rem gap, and it wraps,
-           because a row that cannot give way is a row that leaves the screen. */
+        /* This page keeps only the row's own layout: the tools are one line,
+           printed down the rail — stations of 24 px riding the hairline, the
+           active one filled (client/chrome.mjs draws the checked station), a
+           40 px button box keeping the station easy to hit without fattening
+           the drawing. The hint is the island's own absolutely-positioned
+           first child (`Toolbar.tsx`), so the island is the containing block. */
         #tool-toolbar {
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
             align-items: center;
+            row-gap: 4px;
             column-gap: calc(var(--space-factor, 0.25rem) * 1);
+            position: relative;
+            pointer-events: auto;
+            /* The island plate is gone: a line of stations does not arrive in
+               a box, it arrives on the sheet. */
+            background: transparent;
+            box-shadow: none;
+            border-radius: 0;
+            padding: 0;
+        }
+        #tool-toolbar .ToolIcon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #tool-toolbar .ToolIcon__icon {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--border-radius-md);
+        }
+        #tool-toolbar .ToolIcon__icon svg {
+            width: var(--default-icon-size);
+            height: var(--default-icon-size);
+        }
+        /* The filled station keeps the world's answer: a square, drawn with
+           the line colour, whatever plate the row around it wears. */
+        #tool-toolbar .ToolIcon--checked .ToolIcon__icon {
+            border-radius: 0;
+        }
+        /* The extra-tools menu opens to the right of the rail, the way the
+           reference's opens under the island: the rail is too narrow to hold
+           it. */
+        #tool-toolbar .extra-tools-panel {
+            top: 0;
+            left: calc(100% + 8px);
+            right: auto;
         }
         #toolbar button:not(.ToolIcon):focus-visible {
             outline: 2px solid var(--accent);
@@ -1560,10 +1617,11 @@
            footer, because that is the news the user has to act on. */
         #status {
             position: fixed;
-            left: var(--editor-container-padding);
-            bottom: calc(var(--editor-container-padding) + 44px);
-            max-width: min(480px, calc(100vw - 2 * var(--editor-container-padding)));
+            left: 68px;
+            bottom: 28px;
+            max-width: min(480px, calc(100vw - 92px));
             font-size: 11px;
+            font-variant-numeric: tabular-nums;
             color: var(--ink);
             opacity: 0.4;
             pointer-events: none;
@@ -1710,30 +1768,31 @@
             background: var(--color-surface-primary-container);
             color: var(--color-on-primary-container);
         }
-        /* The style panel: upstream's selected-shape actions, one island in a
-           single column. The rows are `fieldset > legend + .buttonList`
-           (Actions.tsx), and the whole panel is the selection's: with nothing
-           selected the kernel answers no style and the panel is not drawn. The
-           position under the toolbar is written by `client/ui-bindings.mjs`
-           from the bar's own box; the fixed rules here are the fallback a
-           reader gets before the first paint. */
+        /* The style panel is the map's inspector (TASK-285): a 280 px column on
+           the right edge, separated from the drawing by a one-pixel rule, and
+           reaching from the band to the status strip. The rows are
+           `fieldset > legend + .buttonList` (Actions.tsx), and the whole panel
+           is the selection's: with nothing selected the kernel answers no
+           style and the panel is not drawn. `client/style-panel.mjs` writes the
+           column's left, top and max-height from the window's box; the fixed
+           rules here are the fallback a reader gets before the first paint. */
         #style-panel {
             position: fixed;
-            left: var(--editor-container-padding);
-            /* The fallback a reader gets before the first paint. The binder
-               writes the real values from the menu's box and the window's
-               height (client/style-panel.mjs). */
-            top: 76px;
+            top: 48px;
+            right: 0;
+            bottom: 24px;
+            left: auto;
             box-sizing: border-box;
-            width: 195px;
-            max-height: calc(100vh - 166px);
+            width: 280px;
+            max-height: none;
             overflow-y: auto;
-            padding: 8px;
+            padding: 12px;
             pointer-events: auto;
-            background: var(--island-bg-color);
-            border: 1px solid var(--default-border-color);
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-island);
+            background: var(--color-paper);
+            border: 0;
+            border-inline-start: 1px solid var(--color-rule);
+            border-radius: 0;
+            box-shadow: none;
             z-index: 4;
         }
         #style-panel[hidden] {
@@ -1830,13 +1889,15 @@
         #tool-hint {
             position: absolute;
             box-sizing: border-box;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            max-width: 100%;
-            margin-top: 0.5rem;
+            /* The hint is the sentence written beside the line, not inside it
+               (TASK-285, and the discipline that the printed rule guides the
+               hand): a 56 px rail has no room for a sentence to breathe. */
+            bottom: 0;
+            left: calc(100% + 12px);
+            width: min(24rem, calc(100vw - 96px));
+            max-width: min(24rem, calc(100vw - 96px));
             pointer-events: none;
-            text-align: center;
+            text-align: start;
             font-size: 0.75rem;
             line-height: 1.4;
             /* The foundation's two greys by theme: upstream reads
@@ -1999,7 +2060,7 @@
            var(--ui-pointerEvents)` with the answer this page always gives.
            The three hints are decoration: they never take the pointer. */
         .excalifont {
-            font-family: "Excalifont", "Xiaolai";
+            font-family: "NextDraw Script", "Xiaolai";
         }
         #welcome-screen {
             position: absolute;
@@ -2025,27 +2086,23 @@
             column-gap: 0.75rem;
             font-size: 2.25rem;
         }
-        #welcome-screen .ExcalidrawLogo {
+        /* The house's own wordmark (TASK-280, styled for real in TASK-289):
+           the mark and the word bring their own boxes (36×36, 202×40), so the
+           flex line only sets the 12 px between them and rides the ink. */
+        .nd-wordmark {
             display: flex;
             align-items: center;
+            column-gap: 0.75rem;
+            color: var(--color-ink);
         }
-        #welcome-screen .ExcalidrawLogo svg {
+        .nd-wordmark svg {
             flex: 0 0 auto;
-        }
-        #welcome-screen .ExcalidrawLogo .ExcalidrawLogo-icon {
-            width: auto;
-            height: 2.5rem;
-            color: var(--color-primary);
-        }
-        #welcome-screen .ExcalidrawLogo .ExcalidrawLogo-text {
-            width: auto;
-            height: 1.75rem;
-            margin-left: 0.75rem;
-            color: var(--welcome-logo-text);
         }
         #welcome-screen .welcome-screen-center__heading {
             font-size: 1.125rem;
-            line-height: 1.35rem;
+            /* 1.35rem over an 18px line was 1.20x; the detector asks for
+               >=1.3 and the three-line block wraps on mobile (TASK-285 s3). */
+            line-height: 1.5rem;
             text-align: center;
         }
         #welcome-screen .welcome-screen-center__heading-line {
@@ -2230,9 +2287,11 @@
                 top: 0.75rem;
                 left: 0.75rem;
             }
-            /* The bottom bar: the reference's `.App-bottom-bar`. */
+            /* The bottom bar: the map's line laid on its side — a 44 px band
+               along the bottom edge carrying the same stations. */
             #toolbar {
                 position: fixed;
+                top: auto;
                 bottom: 10px;
                 left: 50%;
                 transform: translateX(-50%);
@@ -2242,6 +2301,13 @@
                 flex-direction: column;
                 align-items: stretch;
                 gap: 4px;
+                padding: 0;
+            }
+            /* The rail's hairline belongs to the vertical line; the phone's
+               band is the same line printed across, and its stations ride the
+               band itself. */
+            #toolbar::before {
+                display: none;
             }
             /* The style row: the reference's `.mobile-shape-actions`, the row
                that carries the undo/redo above the tools. It is the same
@@ -2251,7 +2317,9 @@
                 order: -1;
                 position: relative;
                 left: auto;
+                right: auto;
                 top: auto;
+                bottom: auto;
                 max-height: none;
                 box-sizing: border-box;
                 display: flex;
@@ -2314,9 +2382,10 @@
             #style-panel input[type="range"] {
                 max-width: 120px;
             }
-            /* The tool island: the reference's `.mobile-toolbar`, a strip that
-               scrolls sideways. */
+            /* The tool island: the map's line laid across the bottom — the
+               same stations, the same order, scrolling sideways. */
             #tool-toolbar {
+                flex-direction: row;
                 flex-wrap: nowrap;
                 overflow-x: auto;
                 overflow-y: hidden;
@@ -2341,7 +2410,9 @@
             }
             /* The reference's phone has no footer: the zoom group and the help
                button go with it, and the undo/redo leave it for the style row
-               (`client/ui-bindings.mjs` moves them there and back). */
+               (`client/ui-bindings.mjs` moves them there and back). The strip
+               goes with them: a sheet closes at its band, not at an empty rule. */
+            #canvas-footer,
             #zoom-buttons,
             #footer-right {
                 display: none;
@@ -2464,6 +2535,10 @@
          because each region is what the grid places. -->
     <div id="top-bar">
         <div id="canvas-menu">
+            <!-- The band's rótulo (TASK-285): the sheet is signed before it is
+                 read. Text, not a picture, so it carries no second name for a
+                 screen reader to stumble on. -->
+            <span class="nd-band-label">NextDraw</span>
             <!-- The trigger is upstream's hamburger island. The drawing is
                  installed from the iconary (`client/canvas-menu.mjs`) so there
                  is one copy of it, and the button's name is its `aria-label`,

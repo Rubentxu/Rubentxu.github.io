@@ -7,12 +7,13 @@
 // and two controls on the same pixel is a question the pointer cannot answer
 // (`packages/excalidraw/renderer/transformHandles.ts:328-340`).
 //
-// This module holds the two decisions that decide that, and nothing else: the
-// element a double click would edit, and the vertex under the pointer. Both
-// are asked of the kernel, because the kernel is where the chrome is built
-// and where the rule about which shapes have vertices lives. A client copy of
-// that rule would be a second truth about a rule that has to agree with the
-// drawing's own.
+// This module holds the decisions that decide that, and nothing else: the
+// element a double click would edit, the element the selection alone names as
+// point-editable (the semantic verb's floor), and the vertex under the pointer.
+// Every one of them is asked of the kernel, because the kernel is where the
+// chrome is built and where the rule about which shapes have vertices lives.
+// A client copy of that rule would be a second truth about a rule that has to
+// agree with the drawing's own.
 //
 // The three answers the mode needs — which element, which vertex, and what a
 // vertex drag commits — are all here so that they can be tested without a
@@ -56,6 +57,32 @@ export function vertexEditableIdAt(session, x, y, modified = false) {
         return null;
     }
     return id;
+}
+
+/**
+ * Whether the element with this id is one whose vertices the semantic verb edits,
+ * asked of the **selection** rather than of the pointer.
+ *
+ * The same rule the double click follows, with the hit test taken out: the kinds
+ * with vertices are the kernel's own (`kindOf`), and the arrow that turns at
+ * right angles keeps its segment handling — the double click over a pinned
+ * segment (`releaseTarget`) — instead of the polyline editor. The modifier is
+ * not asked because the verb *is* the explicit request: what Ctrl/Cmd says to
+ * the double click, the action's own name says to the kernel.
+ *
+ * The kernel still holds the last word: `beginEditing` answers `false` for an
+ * element that is locked, that is not in the scene, or that has no vertices.
+ *
+ * @param {{ kindOf(id: string): string, isElbowed?(id: string): boolean }} session
+ * @param {string} id
+ * @returns {boolean}
+ */
+export function linearPointsEditable(session, id) {
+    const kind = session.kindOf(id);
+    if (!EDITABLE_KINDS.has(kind)) {
+        return false;
+    }
+    return kind !== "arrow" || session.isElbowed?.(id) !== true;
 }
 
 /**

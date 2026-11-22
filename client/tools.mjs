@@ -16,6 +16,11 @@
 // empty space starts a marquee or selects an element, exactly as
 // before. The `Escape` key and any non-mapped key fall back to it.
 
+// The published font table, so the store's family **name** becomes the
+// document's family **index** against the kernel's own answer rather than a
+// client copy of it (`client/vocabulary.mjs` is generated from the artifact).
+import { FONT_FAMILIES } from "./vocabulary.mjs";
+
 /**
  * The draw tools, the one click tool, the eraser, and the implicit selection cursor.
  *
@@ -393,7 +398,10 @@ export function linearDragIsLongEnough(dx, dy) {
  * @param {string} id Element id, pre-minted by the caller.
  * @param {{x: number, y: number}} origin Scene point the element hangs from.
  * @param {Array<[number, number]>} points The path, relative to the origin.
- * @param {{arrowType?: string}} [options] The shape an arrow takes.
+ * @param {{arrowType?: string, style?: object | null}} [options] The shape an arrow takes,
+ *   and the birth style of the gesture that drew it (`birthStyleFor`, resolved once at the
+ *   press). The style rides the options so the drag and the click-by-click path cannot
+ *   drift into two dialects of the same birth.
  * @returns {string | null} The JSON string, or `null` for an empty extent.
  */
 /**
@@ -417,6 +425,153 @@ export function freshSeed() {
     return Math.floor(Math.random() * 2 ** 31);
 }
 
+/**
+ * The width the document carries for each line-width token **on a shape, a line or an
+ * arrow**.
+ *
+ * The selector speaks names and the document speaks numbers, and the two tables are the
+ * kernel's (`stroke_width::THIN/MEDIUM/BOLD`, `crates/nextdraw-core/src/stroke_width.rs`):
+ * 1, 2 and 4 scene units, `medium` being what an element that says nothing is drawn at.
+ * This is the shape table; the freehand table is the sibling `FREEDRAW_STROKE_WIDTH`,
+ * half these values, because a stroke is written thinner than a box. It lives beside the
+ * builders because the birth of an element is the one moment the client has to spell the
+ * number: from then on the document carries it and the kernel reads it back.
+ */
+export const SHAPE_STROKE_WIDTH = Object.freeze({ thin: 1, medium: 2, bold: 4 });
+
+/**
+ * The roughness the document carries for each sketch-level token.
+ *
+ * The kernel's own numbering (`Roughness::ARCHITECT/ARTIST/CARTOONIST`,
+ * `crates/nextdraw-core/src/scene.rs`), which is upstream's `ROUGHNESS` and is part of the
+ * file format: a document that says `0` says a ruled line. The freehand path's table is
+ * the same three numbers for the same reason.
+ */
+export const SHAPE_ROUGHNESS = Object.freeze({
+    architect: 0,
+    artist: 1,
+    cartoonist: 2,
+});
+
+/**
+ * Resolve a drawing-preferences snapshot into the style an element is **born with**.
+ *
+ * The store speaks the frontier's words (`fill`, `stroke`, `lineWidth`, `roughness`)
+ * because that is the vocabulary `setStyle` takes and `stylesOf` answers; the document
+ * speaks the format's (`fillStyle`, `strokeStyle`, `strokeWidth` as a number, `roughness`
+ * as a number). This is the one place the first set becomes the second, and it is asked
+ * **once per gesture**, at the press — never on the sampling path (TASK-295 AC6).
+ *
+ * Nothing is validated and nothing is coerced, on purpose. The store's values arrive from
+ * the kernel's published vocabulary (`client/vocabulary.mjs`), so a token outside it is a
+ * defect in a control, and the kernel's answer to a token it does not know is a refusal —
+ * not this function's business to paper over. A token with no number behind it leaves the
+ * key **unwritten**, which is the document's own way of saying "the kernel decides", and
+ * the kernel's default is the same value the untouched preference names.
+ *
+ * `edges` is deliberately not here: the corners of a new element are the kernel's
+ * per-kind rule (`Element::default_radius`, applied by `with_format_defaults`), and an
+ * arrow's `roundness` is already spoken for by its shape (sharp, round, elbow).
+ *
+ * @param {object | null | undefined} snapshot the store's snapshot, or nothing.
+ * @returns {object | null} the birth style, in the document's field names, or `null` when
+ *   no snapshot was taken: the element is then born at the kernel's defaults, which is the
+ *   road a caller without drawing preferences (a paste, a test) takes.
+ */
+export function birthStyleFor(snapshot) {
+  if (snapshot === null || snapshot === undefined) {
+    return null;
+  }
+  return Object.freeze({
+    strokeColor: snapshot.strokeColor,
+    backgroundColor: snapshot.backgroundColor,
+    fillStyle: snapshot.fill,
+    strokeStyle: snapshot.stroke,
+    strokeWidth: SHAPE_STROKE_WIDTH[snapshot.lineWidth],
+    roughness: SHAPE_ROUGHNESS[snapshot.roughness],
+    opacity: snapshot.opacity,
+  });
+}
+
+/**
+ * The heads a **new arrow** is born with, from a drawing-preferences snapshot.
+ *
+ * Like `birthStyleFor`, this is the store's word becoming the document's, asked once
+ * at the press and never on the sampling path (TASK-297 AC6). The words are the same
+ * (`startArrowhead`/`endArrowhead`, the heads the kernel draws — `Head::parse`,
+ * `draw_ops.rs`), so there is no table to walk; what there is is the kernel's own
+ * **spelling of the defaults**, which is a key the birth document does not write:
+ * an arrow that says nothing about its start head gets `null` (`element.rs:1774`),
+ * which the kernel reads back as `"none"` (`stylesOf`), and an arrow that says
+ * nothing about its end head gets `"arrow"` (`DEFAULT_END_ARROWHEAD`,
+ * `element.rs:1327`). So a preference that still names the default is omitted — the
+ * document asks for it the kernel's way, by naming nothing — and a preference the
+ * user actually moved is written as chosen, including `"none"` on the end: the
+ * arrow with no head at either end is a claim the document has to carry.
+ *
+ * Lines are deliberately not in this: the store's untouched end-head is the
+ * **arrow's** default `"arrow"`, while the kernel gives a line no head at all, so
+ * writing the preference on a line would draw a head nobody picked. The panel's head
+ * rows are shared, the birth default is not (TASK-297 AC1).
+ *
+ * @param {object | null | undefined} snapshot the store's snapshot, or nothing.
+ * @returns {object | null} the frozen birth heads (possibly empty), or `null` when
+ *   no snapshot was taken: the arrow is then born at the kernel's defaults.
+ */
+export function arrowHeadBirthFor(snapshot) {
+  if (snapshot === null || snapshot === undefined) {
+    return null;
+  }
+  const heads = {};
+  if (snapshot.startArrowhead !== undefined && snapshot.startArrowhead !== "none") {
+    heads.startArrowhead = snapshot.startArrowhead;
+  }
+  if (snapshot.endArrowhead !== undefined && snapshot.endArrowhead !== "arrow") {
+    heads.endArrowhead = snapshot.endArrowhead;
+  }
+  return Object.freeze(heads);
+}
+
+/**
+ * The font family **name** the panel and the store speak, as the document's index.
+ *
+ * Derived from the kernel's published font table, one entry per shipped face; an
+ * unknown name answers `undefined` and the birth names no family (the kernel's
+ * default applies, which is what an untouched preference names anyway).
+ */
+export const TEXT_FONT_FAMILY_IDS = Object.freeze(
+  Object.fromEntries(FONT_FAMILIES.map(({ id, name }) => [name, id])),
+);
+
+/**
+ * The style a **new text** is born with, from a drawing-preferences snapshot.
+ *
+ * The same one-translation-per-birth rule as `birthStyleFor`, in the text's own
+ * fields: the ink is the stroke colour (upstream types a text in
+ * `currentItemStrokeColor`, and `stylesOf` answers the text's colour under that key),
+ * the size is the store's number, and the family crosses from the panel's name to
+ * the document's index through the **published** table (`vocabulary.mjs`, generated
+ * from the kernel's own `vocabulary()`) — so the client holds no copy of the mapping
+ * it is accused of duplicating. A name outside the table resolves to `undefined`,
+ * which `JSON.stringify` drops: the document then names no family and the kernel
+ * applies its own default, the same fall-through `birthStyleFor` gives an unknown
+ * width token.
+ *
+ * @param {object | null | undefined} snapshot the store's snapshot, or nothing.
+ * @returns {{strokeColor: string, fontSize: number, fontFamily: number | undefined}
+ *   | null} the birth style, or `null` when no snapshot was taken.
+ */
+export function birthTextFor(snapshot) {
+  if (snapshot === null || snapshot === undefined) {
+    return null;
+  }
+  return Object.freeze({
+    strokeColor: snapshot.strokeColor,
+    fontSize: snapshot.fontSize,
+    fontFamily: TEXT_FONT_FAMILY_IDS[snapshot.fontFamily],
+  });
+}
+
 export function linearJsonFor(tool, id, origin, points, options = {}) {
   const xs = points.map(([x]) => x);
   const ys = points.map(([, y]) => y);
@@ -426,6 +581,12 @@ export function linearJsonFor(tool, id, origin, points, options = {}) {
     return null;
   }
   const document = {
+    // The gesture's birth style, resolved once at the press (TASK-295): the element is
+    // styled where it is built and never by a write after the insert. A caller that
+    // names no style — a paste, a test, a session without preferences — builds the
+    // document it built before, because these keys are simply absent and the kernel
+    // answers its own defaults for them.
+    ...(options.style ?? {}),
     id,
     angle: 0,
     seed: freshSeed(),
@@ -482,7 +643,11 @@ export function linearJsonFor(tool, id, origin, points, options = {}) {
  * @param {string} id Element id, pre-minted by the caller.
  * @param {{x: number, y: number}} from Scene point the gesture began at.
  * @param {{x: number, y: number}} to Scene point the gesture ended at.
- * @param {{arrowType?: string}} [options] The shape an arrow takes.
+ * @param {{arrowType?: string, seed?: number, created?: number, style?: object | null}} [options]
+ *   The shape an arrow takes, the seed the sketch wobbles with, the note's birth timestamp,
+ *   and the birth style resolved from the gesture's press (`birthStyleFor`). The style is
+ *   written into the document and never onto it afterwards, so the preview the user watched
+ *   and the element the release inserts are one element in one style (TASK-295).
  * @returns {string | null} The JSON string, or `null` for an empty gesture.
  */
 export function shapeJsonFor(tool, id, from, to, options = {}) {
@@ -507,6 +672,12 @@ export function shapeJsonFor(tool, id, from, to, options = {}) {
       }
       const shape = {
         ...common,
+        // The gesture's birth style (TASK-295): the colour, the fill, the width, the dash,
+        // the sketch level and the opacity the pickers were holding when the pointer went
+        // down. The geometry is spelled after it so a style key can never name a box, and
+        // the whole set is absent for a caller that took no snapshot — a paste, a test —
+        // which is born exactly as it was before: the kernel's own defaults.
+        ...(options.style ?? {}),
         type: tool,
         x: Math.min(from.x, to.x),
         y: Math.min(from.y, to.y),
@@ -525,10 +696,15 @@ export function shapeJsonFor(tool, id, from, to, options = {}) {
         // `strokeColor: "#bbb"` and `roughness: 0` — the receipt
         // `frame-children` measured both — and a frame that stored the pen's
         // defaults would look like every shape and weigh like one. The width
-        // stays the kernel's: `FRAME_STYLE.strokeWidth` is 2, which is the
-        // `medium` the kernel already answers.
+        // belongs to the same contract (`FRAME_STYLE.strokeWidth` is 2) and is
+        // spelled here rather than left to the kernel's default, because a
+        // gesture that was born at `bold` would otherwise hand a frame a border
+        // the reference never gives it. The three writes come **after** the
+        // birth style, which is what keeps the frame a frame however the pen is
+        // set (TASK-295 AC5); the fill, the dash and the opacity stay the user's.
         shape.strokeColor = "#bbb";
         shape.roughness = 0;
+        shape.strokeWidth = SHAPE_STROKE_WIDTH.medium;
       }
       // A web embed is a closed shape with one extra field: the address it
       // shows. `null` is a frame with nothing in it yet — upstream writes the
@@ -543,6 +719,16 @@ export function shapeJsonFor(tool, id, from, to, options = {}) {
       // what happens next: the minimum size, and the floor under the base height.
       if (tool === TOOLS.stickynote) {
         shape.baseHeight = height;
+        // A note's paper is a special value of the kernel's: the document asks for it by
+        // saying **nothing** (`scene.rs`: a note with no `backgroundColor` key is born
+        // `STICKY_NOTE_BACKGROUND`, the yellow the reference's notes carry). So the
+        // birth style's untouched `transparent` must not reach the key — a note born
+        // colourless is a note whose contract the pen quietly overwrote. A colour the
+        // user actually chose is a different answer and stays: that is the paper they asked
+        // for (TASK-295, the special-value half of AC5).
+        if (shape.backgroundColor === undefined || shape.backgroundColor === "transparent") {
+          delete shape.backgroundColor;
+        }
         if (Number.isFinite(options.created)) {
           shape.created = options.created;
         }
@@ -607,6 +793,27 @@ export const FREEDRAW_STREAMLINE = Object.freeze({
 });
 
 /**
+ * The freehand table: the birth width each line-width token means **for a stroke**.
+ *
+ * Upstream resolves the birth width per type (`getCurrentItemStrokeWidth`,
+ * `App.tsx:8812-8814` → `FREEDRAW_STROKE_WIDTH`, `constants.ts:497-505`):
+ * thin 0.5, medium 1, bold 2 — "freedraw schema 2.0 uses thinner stroke",
+ * the generic table halved (its `medium` is 2, and the receipt
+ * `create-freedraw` measured upstream 1 where this port's generic 2 landed).
+ * The kernel holds the same table (`stroke_width::FREEDRAW_THIN/MEDIUM/BOLD`)
+ * because the *selector* speaks tokens while the *document* speaks numbers;
+ * the creation document is written here, so the token becomes a number here,
+ * once per birth (`client/gestures/freedraw.mjs`), never per sampled point.
+ * An unknown token gets the default the kernel gives an element that says
+ * nothing about its width: `medium` (`DEFAULT_ELEMENT_STROKE_WIDTH_KEY`).
+ */
+export const FREEDRAW_STROKE_WIDTH = Object.freeze({
+    thin: 0.5,
+    medium: 1,
+    bold: 2,
+});
+
+/**
  * Build the JSON document the kernel's `Session.insert` expects for a freehand
  * stroke.
  *
@@ -635,12 +842,23 @@ export const FREEDRAW_STREAMLINE = Object.freeze({
  *   speed of the stroke instead of read from the pointer.
  * @param {string} stroke.variability `"constant"` or `"variable"`.
  * @param {number} stroke.streamline How much the points are smoothed.
- * @param {{seed?: number}} [options] The seed the element is born with. A draft
+ * @param {{seed?: number, style?: {strokeColor: string, strokeWidth: number, opacity: number}|null}} [options]
+ *   The seed the element is born with. A draft
  *   passes the seed its gesture was minted with, so the preview's wobble is the
  *   wobble the commit lands with; a commit passes nothing and gets a fresh one.
+ *   `style` is the gesture's birth style, resolved ONCE at the press from the
+ *   instance's drawing preferences (TASK-296): the outline colour, the freehand
+ *   table's number for the chosen line-width token, and the opacity. Preview and
+ *   commit pass the same object, so the ink the user watches is the ink that
+ *   lands. Absent, the stroke is born as before: the freedraw table's medium and
+ *   no colour of its own — the kernel's birth defaults apply.
  * @returns {string} The JSON string ready for `Session.insert`.
  */
 export function freedrawJsonFor(id, x, y, stroke, options = {}) {
+    // The style is read property-by-property here — the creation moment — and
+    // nowhere on the sampling path: the gesture resolved its snapshot once at
+    // the press and carries the numbers since (AC6 of TASK-296).
+    const style = options.style ?? null;
     return JSON.stringify({
         id,
         type: "freedraw",
@@ -655,13 +873,22 @@ export function freedrawJsonFor(id, x, y, stroke, options = {}) {
         // misses the key gets the type-blind generic default
         // (`restore.ts:481`), and a copy travels with an explicit width — so
         // the birth is the one moment this table applies, and the builder is
-        // where the birth is.
-        strokeWidth: 1,
+        // where the birth is. A gesture's resolved style names the number
+        // itself; an unstyled call is born at the table's medium, the same
+        // value this builder hardcoded before TASK-296.
+        strokeWidth: style?.strokeWidth ?? FREEDRAW_STROKE_WIDTH.medium,
         // The kernel derives the box from the points. These two are the place the
         // document's own shape has to be, and they are overwritten on the way in.
         width: 0,
         height: 0,
         angle: 0,
+        // The colour and the opacity are the gesture's birth style, and they are
+        // named only when one was taken: a document that says nothing gets the
+        // kernel's birth defaults (`DEFAULT_STROKE_COLOR`, `DEFAULT_OPACITY`,
+        // `element.rs`), which is exactly what the preferences instance is
+        // seeded with — so the styled and unstyled roads agree until the user
+        // chooses otherwise.
+        ...(style ? { strokeColor: style.strokeColor, opacity: style.opacity } : {}),
         points: stroke.points,
         pressures: stroke.pressures,
         simulatePressure: stroke.simulatePressure,
@@ -749,9 +976,17 @@ export function textJsonFor(id, x, y) {
  * @param {string} body The text the user wrote and confirmed.
  * @param {number} x The scene x of the click that opened the editor.
  * @param {number} y The scene y of the click that opened the editor.
+ * @param {number | null} [fixedWidth] The width a drag sized, or `null` for the
+ *   auto-sizing birth.
+ * @param {{strokeColor?: string, fontSize?: number, fontFamily?: number} | null} [style]
+ *   The birth style, resolved ONCE from the gesture's press snapshot by `birthTextFor`
+ *   (TASK-297 AC2): the ink, the size and the family the type panel was holding when the
+ *   editor opened. Absent — a session without preferences, a test, the road before the
+ *   store — the document is the one it always was: no family named (the kernel applies
+ *   its published default), the size it already carried, the default ink.
  * @returns {string} The JSON string ready for `Session.insert`.
  */
-export function createdTextJsonFor(id, body, x, y, fixedWidth = null) {
+export function createdTextJsonFor(id, body, x, y, fixedWidth = null, style = null) {
   return JSON.stringify({
     id,
     type: "text",
@@ -764,8 +999,14 @@ export function createdTextJsonFor(id, body, x, y, fixedWidth = null) {
     width: fixedWidth ?? 80,
     height: 25,
     angle: 0,
-    fontSize: 20,
-    // No `fontFamily` here, the same reason `textJsonFor` names none.
+    // The size is the preference's when one was taken, and the number it
+    // always was otherwise — which is the same number, because the untouched
+    // store names the kernel's `default_text_font_size` (TASK-297 AC2).
+    fontSize: style?.fontSize ?? 20,
+    // The family crosses as the document's index, named only when the store's
+    // name resolved through the published table; an unnamed family is the
+    // kernel's own answer applied, which is what the untouched preference names.
+    ...(style?.fontFamily === undefined ? {} : { fontFamily: style.fontFamily }),
     textAlign: "left",
     verticalAlign: "top",
     lineHeight: 1.25,
@@ -779,7 +1020,11 @@ export function createdTextJsonFor(id, body, x, y, fixedWidth = null) {
     strokeStyle: "solid",
     // No `fill`/`stroke` here on purpose: the receipt measured them as
     // missing-in-upstream, and a birth document that carries them carries
-    // fields the reference never wrote.
+    // fields the reference never wrote. The **ink** the preference chose is the
+    // kernel's own field, `strokeColor` (TASK-297 AC2), written only when a
+    // style was resolved — and it then holds the default `#1e1e1e` untouched,
+    // the value the kernel gives a text that says nothing.
+    ...(style === null ? {} : { strokeColor: style.strokeColor }),
     opacity: 100,
     roughness: 1,
     unmodelled: {

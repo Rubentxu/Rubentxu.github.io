@@ -37,6 +37,7 @@ import { createStaticLayer } from "./static-layer.mjs";
 import { createCommandRunner } from "./run-command.mjs";
 import { bindShapeSwitchPanel, createShapeSwitch } from "./shape-switch.mjs";
 import { createHintPreference } from "./help.mjs";
+import { createStylePreferences } from "./style-preferences.mjs";
 import { createWelcomeScreen } from "./welcome-screen.mjs";
 
 /** Screen pixels left around the content when a fit command frames it. */
@@ -95,6 +96,11 @@ export function createUiState(deps) {
         // The preference remains page-local where browser storage is unavailable.
     }
     const hintPreference = createHintPreference(hintStorage);
+    // The drawing preferences of this mount: the style a new element is born with
+    // and what the pickers show with no selection. One small JS object per app
+    // instance (TASK-294) — never shared between two editors, never in the
+    // kernel, never a store framework.
+    const stylePreferences = createStylePreferences();
     // The welcome screen, built with the spine because the paint is what
     // knows both halves of upstream's condition: the empty document and the
     // armed tool. Its two rows are doors to surfaces the page already owns —
@@ -114,7 +120,7 @@ export function createUiState(deps) {
     // element behind it. The settle is the pipeline's; the sheet, its place
     // on the screen and the hand-off of the body are this mount's, wired
     // beside the double click's editor (the module that owns the sheets).
-    const { mountTextEditor } = bindTextCreation({ document });
+    const { mountTextEditor } = bindTextCreation({ document, preferences: stylePreferences });
 
     // The refresher of every button row and the opacity slider. Set by the page
     // once the rows have been bound to the kernel; a noop until then so the very
@@ -304,6 +310,11 @@ export function createUiState(deps) {
         // chrome record out of the same frame the handles were drawn from, so
         // the cursor's angle cannot drift from the square under the pointer.
         frames,
+        // A creation reads this instance's drawing preferences once, at the
+        // press (TASK-295/296): the style is the same per-instance store the
+        // pickers already write, not a parallel one, and the gesture layer
+        // never keeps a copy.
+        stylePreferences,
         canvasRect,
         isViewOnly: viewOnlyNow,
         penMode: () => penMode.isOn(),
@@ -457,6 +468,7 @@ export function createUiState(deps) {
 
     return {
         viewOnlyNow, pageState, runCommand, toolArmed, mountTextEditor, hintPreference, penMode, toolLock,
+        stylePreferences,
         syncCursor, canvasPointFromEvent, toolState, setToolButtonRefresher,
         onPointerDown, onPointerMove, onPointerUp, onPointerCancel,
         pendingGesture, liveMultipoint, isSpaceHeld, setSpaceHeld, pointerAt,

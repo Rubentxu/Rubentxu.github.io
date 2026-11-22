@@ -1,7 +1,7 @@
 {
-  "commit": "7edf0da7357c029e9c4fe5279bb404ecec2262e9",
+  "commit": "6ba940d6261be1c50f523210fcd6314937a825ed",
   "dirty": false,
-  "inputsDigest": "9729198b20d012a3a3b925fff01eaeb995562e9681a1cb46286c6395b260cc82",
+  "inputsDigest": "3aafcf25cac7e8d5136a560a24d77ff5268d5a40584509985d41753f98e887e4",
   "inputs": [
     {
       "path": ".cargo/config.toml",
@@ -9,11 +9,11 @@
     },
     {
       "path": "Cargo.lock",
-      "sha256": "9fd9d41b1d7fc8daf5a11ab2f7848108142f8b23a19d531c0851691f3c1813ec"
+      "sha256": "8869b93c797003a9f25649fcc5a7dc337ea50403548352e36733939feeb766ce"
     },
     {
       "path": "Cargo.toml",
-      "sha256": "2294327a89203901dc320206a35e124a9e92b2fe7c785c35c761362d78e5d80f"
+      "sha256": "47306924ce4098c4091d37c931f87bb32d3f08a3a83681839c155b60943fb0d3"
     },
     {
       "path": "crates/nextdraw-codec/Cargo.toml",
@@ -21,7 +21,7 @@
     },
     {
       "path": "crates/nextdraw-codec/src/lib.rs",
-      "sha256": "7ff7d56defd818f11000b8f086d3037cb2dbb3dc0682ee9dd4b454ab2548629f"
+      "sha256": "841a31ad0306013cd1c51587e8bb328f30efc1957fd443ad1586b0011ea5d2bb"
     },
     {
       "path": "crates/nextdraw-codec/src/limits.rs",
@@ -88,6 +88,10 @@
       "sha256": "3ea6b1c108a4d185d8a180a0ffac42f5d1358605881e94f17917c4b34fc60f7a"
     },
     {
+      "path": "crates/nextdraw-core/examples/chrome_bound_cost.rs",
+      "sha256": "20ef45a41eed6e91d1d757f8e10f50f4dca2226bc32e71dd4f988dac5b8f76b6"
+    },
+    {
       "path": "crates/nextdraw-core/examples/chrome_cost.rs",
       "sha256": "6e6172a0fe0d9170dbd4db47807a566cf0a844858fc7b7377ce388eace772d04"
     },
@@ -129,7 +133,7 @@
     },
     {
       "path": "crates/nextdraw-core/src/chrome.rs",
-      "sha256": "07e49f714a7b68eb64060867eb5a8afb7d7437b14bea40263c4171cc713d4a9b"
+      "sha256": "5607c5731fe4cb76452e10c198d6aee73c3da9dbad67fbd02a92fcdab127e437"
     },
     {
       "path": "crates/nextdraw-core/src/clipboard.rs",
@@ -177,7 +181,7 @@
     },
     {
       "path": "crates/nextdraw-core/src/font.rs",
-      "sha256": "b0d1950881f0fca11b2ebcfee93dab326cab5961a1822fda2d93046a067e49f9"
+      "sha256": "60a7cfa0767d28c2d60f63ac98168af8ec858b3659e84421e988285c274d4662"
     },
     {
       "path": "crates/nextdraw-core/src/frame.rs",
@@ -201,7 +205,7 @@
     },
     {
       "path": "crates/nextdraw-core/src/hit_test.rs",
-      "sha256": "ddf5b25828c9b2c50c3088949c2d2d972e4c111de3c87ffb98e970be8fadca65"
+      "sha256": "70600defbb7ca5d4fa9bf98c07f3654a65895ff5c9e333d86dc74ae431cf79a3"
     },
     {
       "path": "crates/nextdraw-core/src/image.rs",
@@ -209,7 +213,7 @@
     },
     {
       "path": "crates/nextdraw-core/src/lib.rs",
-      "sha256": "ded7a86e06783dd0393a0ed07a575eff073a89e482c98fc1e23875f95899985a"
+      "sha256": "63f10fdffebdda879645358cb4330b36ee18bbb13b4ebb3c87217165f8504bcb"
     },
     {
       "path": "crates/nextdraw-core/src/linear.rs",
@@ -269,11 +273,15 @@
     },
     {
       "path": "crates/nextdraw-core/src/semantic.rs",
-      "sha256": "f6065163bd182c068df42bfe62c82248353dbc9597ac02d1178fddbcd8337879"
+      "sha256": "07a86874a4917dff3906fdfd688d609b37eb78c4dfebafad0cc49d643abb5659"
     },
     {
       "path": "crates/nextdraw-core/src/session.rs",
-      "sha256": "03c047d8da39ee9ec8ce96b86929e02906a8f4e81d85170645042d1ec9f5221c"
+      "sha256": "c2e005e0d34a5c857e30962050259acfb4d694f702113037057884648f7e8627"
+    },
+    {
+      "path": "crates/nextdraw-core/src/session/group.rs",
+      "sha256": "946b00f1f1769fa214f831668dfcd523918b6f94e0b29a93e80254660b758ef9"
     },
     {
       "path": "crates/nextdraw-core/src/snap.rs",
@@ -377,7 +385,7 @@
     },
     {
       "path": "crates/nextdraw-core/tests/it/suite/elbow_hit_route.rs",
-      "sha256": "e6196b1dbe71325bc0e60d14df91ef44a54d36ef13286db7c8e55e87e32eba16"
+      "sha256": "6c95c2684ef52db466388fecad79171c6f4ed8392970216c6c49491f2411d009"
     },
     {
       "path": "crates/nextdraw-core/tests/it/suite/elbow_outer_segment_pin.rs",
@@ -401,7 +409,7 @@
     },
     {
       "path": "crates/nextdraw-core/tests/it/suite/font_vectors.rs",
-      "sha256": "13a0260276caab580c40e70450e6ac8b7adf94145bcb39081e86a2c07d38b6dd"
+      "sha256": "a60b5b9116dcbe0e2f60474a09c5dc54cd91c827e50bc643ca0387e0c1aed3b6"
     },
     {
       "path": "crates/nextdraw-core/tests/it/suite/format_defaults.rs",
@@ -469,7 +477,7 @@
     },
     {
       "path": "crates/nextdraw-core/tests/it/suite/mod.rs",
-      "sha256": "faeebda7638ac94b2dda110f4365ac87824ec0e03d0244c2f0efcb7f2f03d4b6"
+      "sha256": "57fcb7fdc00dad8e74b452d3349131539ee4848b9c30fb52e9f2fe891bf0465b"
     },
     {
       "path": "crates/nextdraw-core/tests/it/suite/move_vertex.rs",
@@ -512,6 +520,10 @@
       "sha256": "0c46b58c13ad0a67526131f8cfdc31796c239706ee6eb153518189312390ed0c"
     },
     {
+      "path": "crates/nextdraw-core/tests/it/suite/session_group.rs",
+      "sha256": "a04e7e5a4ab76cad54767128c1764cb7ad115c907ec4335ed100bcfedfd966d0"
+    },
+    {
       "path": "crates/nextdraw-core/tests/it/suite/shape_switch.rs",
       "sha256": "3f0e4f68f7dc8ed2e4bba6dad5c84f9924dec02064d4bda1a15ea63a760afb9b"
     },
@@ -542,6 +554,10 @@
     {
       "path": "crates/nextdraw-core/tests/it/suite/suggested_bind.rs",
       "sha256": "44ef4b52e6015234bb7ae0cb35de63571149b3e9cf78c18746e00e9684d722f9"
+    },
+    {
+      "path": "crates/nextdraw-core/tests/it/suite/task300_hit_zoom.rs",
+      "sha256": "263634eaacdcf346208933be4e2ff19c7f4896e134cb044eabcad23039991f98"
     },
     {
       "path": "crates/nextdraw-core/tests/it/suite/text_advances.rs",
@@ -693,7 +709,7 @@
     },
     {
       "path": "crates/nextdraw-wasm/src/document.rs",
-      "sha256": "410b7bc4c14fb35f1dfafbf457fe6d908cb644c64712782b79e9addf3260788d"
+      "sha256": "62c89717d0e47ae21d33764f24aaac3a0915e447d6ee40f49a83b453ab04acdb"
     },
     {
       "path": "crates/nextdraw-wasm/src/eraser.rs",
@@ -717,11 +733,11 @@
     },
     {
       "path": "crates/nextdraw-wasm/src/hit.rs",
-      "sha256": "37fa64be7cf1473594afb5d4398b4aab8549793e2f2d118982f4e56ebe359903"
+      "sha256": "9f519851c9acd3dcbbb3c74adf89bdf451a24734a8af0a7360182f5d6da9a6a6"
     },
     {
       "path": "crates/nextdraw-wasm/src/lib.rs",
-      "sha256": "4266c73271f0acc065315061174ef36c88799030f3c2e0fe3ff360ff408b3d25"
+      "sha256": "9270c7ec3dbcb1b4a920a61eae491fde0dc47364eb97feb7655f97ca99c8c3c3"
     },
     {
       "path": "crates/nextdraw-wasm/src/panic_hook.rs",
@@ -733,7 +749,7 @@
     },
     {
       "path": "crates/nextdraw-wasm/src/style.rs",
-      "sha256": "ebfc6e124e512e3c67c42ea587fa7f85831b25cd2a4c73600d6d4e5abbfdb5f6"
+      "sha256": "828ca80152d8bc0384ac03faa308861fceb429ebbbaa09b630d886f7ce05b4bd"
     },
     {
       "path": "crates/nextdraw-wasm/src/vertices.rs",
@@ -760,8 +776,12 @@
       "sha256": "10de8c5d7182f8b68d5257eda21ad14b8b610bc525f282e97217158af14d81de"
     },
     {
+      "path": "crates/nextdraw-wasm/tests/it/suite/hit_doors.rs",
+      "sha256": "6664b558d67341458ce7f307b8d91ddb39403556e59241d935a379ae18d96151"
+    },
+    {
       "path": "crates/nextdraw-wasm/tests/it/suite/mod.rs",
-      "sha256": "2b19affe634d2e73dfb4350254a583a04a8e97f2054cce9f050b4695b91363bc"
+      "sha256": "8c6183cfead15d672b0096178cc3058467150348a5e14e41e13cac170f18fa30"
     },
     {
       "path": "crates/nextdraw-wasm/tests/it/suite/postcard_contract.rs",
@@ -777,7 +797,7 @@
     },
     {
       "path": "crates/nextdraw-wasm/tests/it/suite/vocabulary.rs",
-      "sha256": "c31aafdd511d737286ef304f0633c653e6cb5b15f9b6f3eec4bacc67078111e3"
+      "sha256": "9ed700a2cdc62a7fdb52f866900af7c4d2764ae19bf99733ad493f32c3ec468d"
     },
     {
       "path": "rust-toolchain.toml",

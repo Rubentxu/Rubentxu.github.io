@@ -23,6 +23,7 @@ import { installChromeCss, installChromeTokens } from "./chrome.mjs";
 import { bindFooterHelp, decorateFooterIcons } from "./footer.mjs";
 import { decorateStyleButtons } from "./style-icons.mjs";
 import { bindStyleToolbars } from "./style-toolbar.mjs";
+import { createStylePreferences } from "./style-preferences.mjs";
 import { bindStylePanel } from "./style-panel.mjs";
 import { bindInks } from "./text-editor-wiring.mjs";
 import { bindTextStyle } from "./text-style.mjs";
@@ -73,8 +74,13 @@ export function bindUiCommands(deps) {
         document, session, ctx, paint, statusLine, renderStatus, lifecycle,
         viewOnlyNow, runCommand, toolArmed, commandState, toolState, syncCursor,
         setToolButtonRefresher, labelOf, emptyText, say, pendingGesture, hintPreference, penMode, toolLock,
+        stylePreferences,
         theme = () => "light",
     } = deps;
+    // The instance's drawing preferences. The page mints one per mount and hands
+    // it down; a suite binding this table without one gets its own fresh store,
+    // never a shared singleton.
+    const preferences = stylePreferences ?? createStylePreferences();
     // The chrome's tokens and stylesheet, before any binder builds a row:
     // every island, button and cycle the binders lay out is drawn by the
     // names these two install (`client/chrome.mjs`), and a binder that ran
@@ -121,6 +127,7 @@ export function bindUiCommands(deps) {
         document,
         session,
         paintFn: () => paint(session, ctx),
+        preferences,
         signal: lifecycle.signal,
         onError: (error) => {
             statusLine.setProblem(`setStyle failed: ${error.message ?? error}`);
@@ -130,7 +137,7 @@ export function bindUiCommands(deps) {
     // The two inks: a palette and a hex entry each, over the same write door.
     const { syncStrokeColour, syncBackgroundColour } = bindInks({
         document, session, ctx, paint, statusLine, renderStatus, lifecycle, text: say,
-        theme,
+        theme, preferences,
     });
     // The type settings of a selected text, over the same write door. The
     // page draws each property as its own section (`Actions.tsx`'s font family,
@@ -148,6 +155,9 @@ export function bindUiCommands(deps) {
         createElement: (tag) => document.createElement(tag),
         signal: lifecycle.signal,
         text: say,
+        // With no text selected the rows show and take the birth preference
+        // (TASK-297 AC2): the type the next text is born with.
+        preferences,
         onError: (error) => {
             statusLine.setProblem(`setStyle failed: ${error.message ?? error}`);
             renderStatus();
@@ -156,6 +166,9 @@ export function bindUiCommands(deps) {
     // The heads and the bend of a selected line or arrow, over the same write
     // door. They are two sections upstream — "Arrow type" before the text group
     // and "Arrowheads" after it — so the binder is called twice, once per host.
+    // With no selection the rows show and take the birth (TASK-297 AC1): the
+    // heads go to the preference store, the bend to the tool state — the one
+    // truth the press reads and the `a` key already walks.
     const arrowBinder = (host, properties) => bindArrowStyle({
         host,
         properties,
@@ -164,6 +177,8 @@ export function bindUiCommands(deps) {
         createElement: (tag) => document.createElement(tag),
         signal: lifecycle.signal,
         text: say,
+        preferences,
+        toolState,
         onError: (error) => {
             statusLine.setProblem(`setStyle failed: ${error.message ?? error}`);
             renderStatus();
@@ -390,7 +405,6 @@ export function bindUiCommands(deps) {
     };
     const panel = bindStylePanel({
         root: document.getElementById("style-panel"),
-        menu: document.getElementById("canvas-menu"),
         view: document.defaultView,
         session,
         toolState,
@@ -398,7 +412,7 @@ export function bindUiCommands(deps) {
         labelCommand,
         icon: (name) => (name === null ? null : (CHROME_ICONS[name] ?? null)),
         isViewOnly: viewOnlyNow,
-        // On a phone this panel is not an island under the menu: it is the
+        // On a phone this panel is not the inspector column: it is the
         // bottom bar's horizontal style row (`index.html`), and it is up even
         // with nothing selected, because that row carries the undo and the
         // redo.
@@ -408,11 +422,15 @@ export function bindUiCommands(deps) {
     });
     const syncStylePanel = (styles) => {
         syncStyleControls(styles);
-        panel.sync(styles);
+        // The panel gates its sections on the styles it is shown: with no
+        // selection those are the instance's preferences, so a fill row appears
+        // when the preferred background says there is one to fill.
+        panel.sync(styles === null ? preferences.snapshot() : styles);
     };
-    // The first answer is the empty canvas's; every later one comes from a
-    // paint, the same door the style rows are refreshed through.
-    panel.sync(null);
+    // The first answer is the empty canvas's — the preferences, shown; every
+    // later one comes from a paint, the same door the style rows are refreshed
+    // through.
+    panel.sync(preferences.snapshot());
     return {
         syncStyleControls: syncStylePanel, syncStrokeColour, syncBackgroundColour, syncTextStyle,
         syncArrowStyle, syncHistoryButtons, syncZoomButtons, menu, palette, helpDialog, hintViewer,

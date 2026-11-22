@@ -65,18 +65,23 @@ export function joinRoom(deps) {
     // and that is the trade ADR-007 wrote down.
     const roomKey = room.key ?? null;
     const roomKeyCodec = roomKey === null ? null : createRoomKeyCodec();
+    // The room's capability, when the embedder handed one: a header of the
+    // request and never a part of its path. The relay answers a guarded room's
+    // doors to `x-room-token` (and refuses anything without it with a 403 the
+    // round swallows, local-first); a query token would outlive the request in
+    // the relay's access log, the page's history and whoever is shown the URL.
+    const capability = room.token === undefined ? null : { "x-room-token": room.token };
     const collabLink = createCollabLink({
         roomUrl: room.url,
         roomId: room.name,
         clientId,
-        ...(room.token === undefined ? {} : { token: room.token }),
         post: (path, body) =>
             fetch(path, {
                 method: "POST",
-                headers: { "content-type": "application/json" },
+                headers: { "content-type": "application/json", ...(capability ?? {}) },
                 body: JSON.stringify(body),
             }).then(asAnswer),
-        get: (path) => fetch(path).then(asAnswer),
+        get: (path) => fetch(path, capability === null ? undefined : { headers: capability }).then(asAnswer),
         ...(roomKeyCodec === null ? {} : {
             presenceCodec: {
                 seal: (value) => roomKeyCodec.seal(roomKey, value),

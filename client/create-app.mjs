@@ -12,7 +12,7 @@
 //   happened and asks it to paint the result. Geometry, versioning and z-order
 //   all live in Rust.
 
-import init, { Session, kernelPanicTag, model_version, wireSchema, vocabulary } from "../pkg/nextdraw_wasm.js";
+import init, { Session, embeddable_policy, kernelPanicTag, model_version, wireSchema, vocabulary } from "../pkg/nextdraw_wasm.js";
 import { refuseMissingMarkup } from "./app-mount.mjs";
 import { startSession } from "./boot.mjs";
 import * as multipointMode from "./multipoint.mjs";
@@ -214,13 +214,13 @@ const copyDrawing = createCopyDrawing({ canvas, statusLine, renderStatus });
 // The pieces a library file lays down, from their own module.
 const insertLibraryPieces = createInsertLibraryPieces({ canvas, window, statusLine, renderStatus });
 
-// The clipboard is a use case of its own (TASK-26): paste and share are the
-// two verbs this page shares with the rest of the machine, and the module
-// beside this one owns them. Everything it answers back is bound here, so the
-// registry dispatches by the same names it always did.
-//
+// The clipboard is a use case of its own (TASK-26): paste and share are the two
+// verbs this page shares with the machine, and the module beside this one owns
+// them. Everything it answers back is bound here; what the embeddable road
+// admits is the kernel's own answer, `embeddable_policy` (TASK-272), read here.
 const { pasteFromTheSystem, pastePlainFromTheSystem, shareWithTheSystem } = createClipboardUseCase({
     canvas, statusLine, renderStatus, paint, chartDialog, text: say,
+    embeddablePolicy: (link) => JSON.parse(embeddable_policy(link ?? null)),
 });
 
 // The save, the tabs, the pictures' store, the recovery offer and the stored
@@ -256,7 +256,7 @@ const uiState = createUiState({
     setPaintNow,
 });
 const {
-    viewOnlyNow, pageState, runCommand, toolArmed, syncCursor, canvasPointFromEvent, toolState, hintPreference, penMode, toolLock,
+    viewOnlyNow, pageState, runCommand, toolArmed, syncCursor, canvasPointFromEvent, toolState, hintPreference, penMode, toolLock, stylePreferences,
     setToolButtonRefresher, onPointerDown, onPointerMove, onPointerUp, onPointerCancel,
     pendingGesture, liveMultipoint, isSpaceHeld, setSpaceHeld, menuNow, paletteNow, pointerAt,
 } = uiState;
@@ -311,16 +311,16 @@ async function boot() {
         viewOnlyNow, runCommand, toolArmed, commandState, toolState, syncCursor,
         setToolButtonRefresher, labelOf: commandLabel,
         emptyText: textOf(STRINGS, locale, "palette.empty", "No matching command"),
-        say, pendingGesture, hintPreference, penMode, toolLock,
+        say, pendingGesture, hintPreference, penMode, toolLock, stylePreferences,
         theme: () => document.documentElement.dataset.theme ?? "light",
     }));
     const paletteInput = document.getElementById("palette-input");
     paletteInput.placeholder = textOf(STRINGS, locale, "palette.placeholder", paletteInput.placeholder);
     localizePage(document, STRINGS, locale);
-    // H5.11 inline editing and the vertex edit mode: the double click.
+    // H5.11 inline editing and the vertex edit mode: the double click; its free text (TASK-297 AC2).
     bindTextEditing({
         canvas, document, session, ctx, frames, viewOnlyNow, canvasPointFromEvent,
-        paint, statusLine, renderStatus, lifecycle,
+        paint, statusLine, renderStatus, lifecycle, preferences: stylePreferences,
         mountTextEditor: uiState.mountTextEditor,
         theme: () => document.documentElement.dataset.theme ?? "light",
         platform: window.navigator?.userAgentData?.platform ?? window.navigator?.platform ?? "",

@@ -2,9 +2,10 @@
 //
 // Like the colour pickers, these are not rows of the `STYLES` table: the typeface and
 // the alignments are closed lists, but they only exist for one kind of element, and the
-// size is a number. What they share with every other control is the contract that
-// matters — one write door (`setStyle`), the whole selection per gesture (one undo), and
-// a `sync` fed by the parsed `stylesOf` so the panel costs one crossing per frame.
+// size is a number. What they share with every other control is the write door
+// `stylePatch` opens onto — with a selection, the whole selection per gesture (one undo)
+// and a `sync` fed by the parsed `stylesOf` so the panel costs one crossing per frame;
+// with none, the birth preference of this instance (TASK-297).
 //
 // The kernel is the authority on every value here. The typefaces listed are the ones the
 // build ships a face for (`setStyle` refuses any other by name), and the size bounds are
@@ -50,9 +51,10 @@ export function parseSize(text) {
  * write per keystroke would be one undo entry per digit.
  *
  * `sync(styles)` lights the button each property's whole selection shares, fills the
- * size, and shows the row only when the selection holds a text (the kernel answers
- * `null` for a selection with no text in it). A property where the texts disagree
- * answers `"mixed"`: nothing is lit and the row says `data-mixed`.
+ * size, and shows the row only when there is a word for it: the selection's when it
+ * holds a text, the birth preference's when it holds none and the mount has a store.
+ * A property where the texts disagree answers `"mixed"`: nothing is lit and the row
+ * says `data-mixed`.
  *
  * @param {object} options
  * @param {Element} options.host the row; it holds the size entry (`input`).
@@ -65,6 +67,8 @@ export function parseSize(text) {
  * @param {{fontFamily: Element, fontSize: Element, textAlign: Element, verticalAlign: Element}} [options.hosts]
  *   the per-property sections, when the page draws each as its own `fieldset`.
  *   A single `host` is still supported for a caller that draws them together.
+ * @param {{ snapshot: () => object, set: (key: string, value: *) => void } | null}
+ *   [options.preferences] the instance's birth preferences for size and typeface.
  * @returns {{sync: (styles: object | null) => void}}
  */
 export function bindTextStyle({
@@ -78,18 +82,45 @@ export function bindTextStyle({
     },
     signal,
     text = (_key, source) => source,
+    preferences = null,
 }) {
     const entry = (hosts?.fontSize ?? host).querySelector("input");
     if (!entry) {
         throw new Error("text-style: the host carries no size entry");
     }
+    // The two type properties the birth carries are store keys (TASK-297): the
+    // ink the next text is born with travels as `strokeColor`, which the colour
+    // picker already owns. The alignments are not store keys — a born text
+    // takes the kernel's centring, and there is no receipt for changing that.
+    const BIRTH_KEYS = new Set(["fontSize", "fontFamily"]);
+    const preferenceRecord = () => {
+        if (preferences === null) {
+            return null;
+        }
+        const snapshot = preferences.snapshot();
+        return { fontSize: snapshot.fontSize, fontFamily: snapshot.fontFamily };
+    };
     const write = (property, value) => {
         const ids = session.selectedIds();
+        // With no selection the control chooses the birth: the store takes the
+        // value and nothing crosses to the kernel — no `setStyle`, no history
+        // entry, no repaint of an untouched document.
+        if (ids.length === 0 && preferences !== null && BIRTH_KEYS.has(property)) {
+            preferences.set(property, value);
+            sync(null);
+            return;
+        }
         try {
             session.setStyle(ids, stylePatch(property, value));
         } catch (error) {
             onError(error);
             return;
+        }
+        // An explicit click on a birth key mirrors into the store even with a
+        // selection — the pick is explicit, so AC4 holds: a `"mixed"` reading
+        // is what `sync` shows, never what the store keeps.
+        if (preferences !== null && BIRTH_KEYS.has(property)) {
+            preferences.set(property, value);
         }
         paintFn();
     };
@@ -128,37 +159,42 @@ export function bindTextStyle({
         entry.removeAttribute("aria-invalid");
         write("fontSize", size);
     }, { signal });
-    return {
-        sync(styles) {
-            const present = styles !== null && styles.textAlign != null;
-            if (hosts === null) {
-                host.hidden = !present;
-            }
-            if (!present) {
-                return;
-            }
-            let mixed = false;
-            for (const { button, property, choice } of buttons) {
-                button.classList.toggle("is-active", styles[property] === choice);
-            }
-            for (const property of Object.keys(TEXT_CHOICES)) {
-                mixed ||= styles[property] === "mixed";
-            }
-            if (typeof styles.fontSize === "number") {
-                entry.value = String(styles.fontSize);
-                entry.removeAttribute("aria-invalid");
+    const sync = (styles) => {
+        // `null` is no text in the selection: the panel shows the birth
+        // preference when the mount has a store (size and typeface; the ink
+        // travels on the colour picker's own row), and hides as it always did
+        // when it has none.
+        const shown = styles === null || styles === undefined ? preferenceRecord() : styles;
+        const present = shown !== null
+            && (shown.textAlign != null || shown.fontSize != null || shown.fontFamily != null);
+        if (hosts === null) {
+            host.hidden = !present;
+        }
+        if (!present) {
+            return;
+        }
+        let mixed = false;
+        for (const { button, property, choice } of buttons) {
+            button.classList.toggle("is-active", shown[property] === choice);
+        }
+        for (const property of Object.keys(TEXT_CHOICES)) {
+            mixed ||= shown[property] === "mixed";
+        }
+        if (typeof shown.fontSize === "number") {
+            entry.value = String(shown.fontSize);
+            entry.removeAttribute("aria-invalid");
+        } else {
+            entry.value = "";
+            mixed = true;
+        }
+        for (const target of hosts === null ? [host] : Object.values(hosts)) {
+            if (target === null || target === undefined) continue;
+            if (mixed) {
+                target.setAttribute("data-mixed", "true");
             } else {
-                entry.value = "";
-                mixed = true;
+                target.removeAttribute("data-mixed");
             }
-            for (const target of hosts === null ? [host] : Object.values(hosts)) {
-                if (target === null || target === undefined) continue;
-                if (mixed) {
-                    target.setAttribute("data-mixed", "true");
-                } else {
-                    target.removeAttribute("data-mixed");
-                }
-            }
-        },
+        }
     };
+    return { sync };
 }

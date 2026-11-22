@@ -6,8 +6,21 @@
 // are the ones the picker and the Open button already use, so a dropped file and a
 // chosen file cannot be treated differently.
 
-/** The extensions of a file the editor opens as a document. */
-export const DOCUMENT_EXTENSIONS = Object.freeze([".excalidraw", ".excalidrawlib", ".json"]);
+import { EXCALIDRAW_EXTENSION, NEXTDRAW_EXTENSION } from "./document-io.mjs";
+
+/**
+ * The extensions of a file the editor opens as a document.
+ *
+ * Our own extension and the reference's, the library, and the plain JSON a document
+ * may also be called: the drop door asks about the name because that is all a drop
+ * carries, and a drawing that arrives under any of these names is a drawing.
+ */
+export const DOCUMENT_EXTENSIONS = Object.freeze([
+    NEXTDRAW_EXTENSION,
+    EXCALIDRAW_EXTENSION,
+    ".excalidrawlib",
+    ".json",
+]);
 
 /** The scene distance between pictures dropped together, so they do not hide each other. */
 export const DROP_STEP = 24;

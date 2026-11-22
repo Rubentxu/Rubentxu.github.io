@@ -1,14 +1,18 @@
 // Fonts inside an exported drawing.
 //
-// An SVG file that names `font-family="Excalifont"` draws in that face only on a machine
-// that has it installed; anywhere else the text falls back and the drawing no longer
-// looks like itself. The export therefore carries the faces it uses, as `@font-face`
-// rules whose source is a data URI, so the file is self-contained.
+// An SVG file that names `font-family="NextDraw Script, Xiaolai, sans-serif"` draws in
+// that face only on a machine that has it installed; anywhere else the text falls back
+// and the drawing no longer looks like itself. The export therefore carries the faces it
+// uses, as `@font-face` rules whose source is a data URI, so the file is self-contained.
 //
 // Only what the drawing needs travels: the families its `<text>` elements name, and of
 // each family only the subsets (`unicode-range`) holding a character the drawing really
 // draws. The declarations come from `client/fonts/fonts.css`, the stylesheet the page
 // itself paints with, so the file and the screen read one list of faces.
+//
+// The `font-family` of a text carries the whole **stack** the kernel resolved, and the
+// face the browser draws with is its first member; the rest are the browser's own
+// fallbacks, which this build does not ship and therefore does not embed.
 
 /** One `@font-face` of the stylesheet, as `{family, file, ranges}`. */
 const FACE = /font-family:\s*"([^"]+)";[^}]*?url\("([^"]+)"\)[^}]*?unicode-range:\s*([^;]+);/g;
@@ -41,7 +45,27 @@ function unescapeXml(text) {
 }
 
 /**
+ * The face a `font-family` attribute names first.
+ *
+ * The attribute carries the whole **stack** — the family and the fallbacks behind it,
+ * the way the kernel resolves it (`crates/nextdraw-core/src/font.rs`) — and the face the
+ * browser will really draw with is the first member of it. The fallbacks are the
+ * browser's own (the generic family, the emoji one): they are not faces this build
+ * ships, so they are not the ones to embed.
+ *
+ * @param {string} stack the attribute's value.
+ * @returns {string} the family name, without the quotes CSS may put around it.
+ */
+export function firstFamily(stack) {
+    const first = stack.split(",")[0].trim();
+    return first.replace(/^["']/, "").replace(/["']$/, "");
+}
+
+/**
  * The characters each family draws in a finished SVG document.
+ *
+ * The key is the family the text is drawn with — the first member of the stack, which
+ * is the face the browser picks.
  *
  * @param {string} svg the document.
  * @returns {Map<string, Set<number>>} code points by family name.
@@ -51,7 +75,7 @@ export function charactersByFamily(svg) {
     for (const [, family, body] of svg.matchAll(
         /<text\b[^>]*\sfont-family="([^"]*)"[^>]*>([^<]*)<\/text>/g,
     )) {
-        const name = unescapeXml(family);
+        const name = firstFamily(unescapeXml(family));
         const points = used.get(name) ?? new Set();
         for (const char of unescapeXml(body)) {
             points.add(char.codePointAt(0));

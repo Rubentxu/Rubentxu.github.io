@@ -189,10 +189,18 @@ export function installChromeCss(document) {
     font-family: var(--ui-font);
     user-select: none;
 }
+/* The badge of the active station wears the ink of the station: the key on a
+   filled square is the same colour as the icon on it, or it is not read. */
+.ToolIcon--checked .ToolIcon__keybinding {
+    color: var(--color-on-primary-container);
+}
 /* The checked and disabled answers — toolbarButtonColorStates
-   (css/variables.module.scss). */
+   (css/variables.module.scss). The checked station is the world's active
+   station: it is filled with the line colour, and it is a square, because the
+   colour is never the only thing that says which station is the active one. */
 .ToolIcon_type_toggle.ToolIcon--checked .ToolIcon__icon {
     background: var(--color-surface-primary-container);
+    border-radius: 0;
 }
 .ToolIcon_type_toggle.ToolIcon--checked .ToolIcon__icon svg {
     color: var(--color-on-primary-container);
@@ -260,10 +268,11 @@ export function installChromeCss(document) {
 }
 /* The focus ring the cycles announce themselves with: the input inside the
    label carries the focus, the label draws it (styles.scss's
-   .buttonList label:focus-within). */
+   .buttonList label:focus-within). The ring is the focus token, the same
+   colour the icon buttons draw theirs with. */
 .buttonList label:focus-within {
     outline: transparent;
-    box-shadow: 0 0 0 1px var(--color-brand-hover);
+    box-shadow: 0 0 0 1px var(--focus-highlight-color);
 }
 .buttonList label:hover,
 .buttonList button:hover {
@@ -450,10 +459,12 @@ export function iconCycle(document, { group, options, value, onCycle }) {
 export function separator(document) {
     const rule = document.createElement("div");
     // Upstream's `ButtonSeparator` renders a bare `div`: the geometry is the
-    // component's and it carries no class for a stylesheet to own.
+    // component's and it carries no class for a stylesheet to own. The colour
+    // is the world's: a separator is a line drawn between two zones, so it
+    // wears the rule (1 px of ink at 12 %) and not the border of a control.
     rule.style.width = "1px";
     rule.style.height = "1rem";
-    rule.style.backgroundColor = "var(--default-border-color)";
+    rule.style.backgroundColor = "var(--color-rule)";
     rule.style.margin = "0 auto";
     return rule;
 }

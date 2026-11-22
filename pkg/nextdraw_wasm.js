@@ -3655,6 +3655,51 @@ export class Session {
         return ret === Number.MAX_SAFE_INTEGER ? undefined : ret;
     }
     /**
+     * The arrows into and out of `id`, in one answer.
+     *
+     * The same relation the `incoming`/`outgoing` cases of
+     * [`Self::semantic_navigate`] answer with, and nothing else: the core
+     * composes the two, so one crossing asks the whole question a reader of
+     * one element has and no caller can pair an answer from one path with an
+     * answer from the other. The payload is
+     * `{"version":1,"id":…,"outgoing":{"targets":[…],"freeEnd":bool},`
+     * `"incoming":{…}}`, with the free arrow ends named in `freeEnd` and never
+     * turned into targets.
+     *
+     * # Errors
+     *
+     * An empty id, an element the scene does not have or a serialisation
+     * failure names itself `semantic_connections_invalid:`/`_failed:`.
+     * @param {string} id
+     * @returns {string}
+     */
+    semanticConnections(id) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passStringToWasm0(id, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+            const len0 = WASM_VECTOR_LEN;
+            wasm.session_semanticConnections(retptr, this.__wbg_ptr, ptr0, len0);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+            var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
+            var ptr2 = r0;
+            var len2 = r1;
+            if (r3) {
+                ptr2 = 0; len2 = 0;
+                throw takeObject(r2);
+            }
+            deferred3_0 = ptr2;
+            deferred3_1 = len2;
+            return getStringFromWasm0(ptr2, len2);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+            wasm.__wbindgen_export3(deferred3_0, deferred3_1, 1);
+        }
+    }
+    /**
      * Navigate from `id` by a named relation and answer with the targets.
      *
      * Relations: `next`, `previous`, `parent`, `children`, `incoming`,
@@ -5461,6 +5506,47 @@ export function kernelPanicTag() {
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
         wasm.__wbindgen_export3(deferred1_0, deferred1_1, 1);
+    }
+}
+
+/**
+ * The box the kernel's text table gives a body, as the layout that owns it reads it.
+ *
+ * The chart labels used to be measured by the browser's `ctx.measureText`, which made
+ * the painted face the owner of a box the kernel claims as its own — and the day the
+ * family's shipped face changed, the chart's stored widths moved with the font instead
+ * of with the table the receipts are calibrated on. PARITY-057 moved the question here:
+ * the box is `nextdraw_core::measure_text`'s answer, and one face paints what another
+ * face measured is a known, accepted consequence of one owner.
+ *
+ * The answer crosses as JSON, the way [`wire_schema`] and [`document_limits`] do: the
+ * pair is named, not positional, and a reader that had to know which slot was the width
+ * would be a second copy of the shape. The floats survive the round trip bit for bit —
+ * serde writes the shortest representation that parses back to the same `f64`.
+ *
+ * No `Session`: the table is a function of the body and the type settings, and an
+ * argument the answer does not read has no business being asked for.
+ * @param {string} body
+ * @param {number} font_size
+ * @param {number} line_height
+ * @returns {string}
+ */
+export function measureText(body, font_size, line_height) {
+    let deferred2_0;
+    let deferred2_1;
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passStringToWasm0(body, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.measureText(retptr, ptr0, len0, font_size, line_height);
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        deferred2_0 = r0;
+        deferred2_1 = r1;
+        return getStringFromWasm0(r0, r1);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+        wasm.__wbindgen_export3(deferred2_0, deferred2_1, 1);
     }
 }
 

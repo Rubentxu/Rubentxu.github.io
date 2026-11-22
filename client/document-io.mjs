@@ -3,7 +3,8 @@
 // # What this module is
 //
 // The two directions of the same crossing — bytes on disk into a live session, and a
-// live session out to bytes on disk — for the `.excalidraw` envelope upstream writes.
+// live session out to bytes on disk — for the `.nextdraw` document, whose envelope
+// is the one upstream writes.
 //
 // # What it is not
 //
@@ -33,23 +34,71 @@ import { extractPngScene } from "./png-scene.mjs";
 import { handOverText } from "./handoff.mjs";
 
 /**
- * What an `.excalidraw` download declares itself as.
+ * What a `.nextdraw` download declares itself as.
  *
  * Upstream's `MIME_TYPES.excalidraw` (`packages/common/src/constants.ts`). The same
  * string, because the file has to open in Excalidraw as well as in NextDraw, and the
- * type is what the operating system's file manager reads to decide that.
+ * type is what the operating system's file manager reads to decide that. The name of
+ * the file is ours; the type it declares is the reference's, and it stays: a document
+ * that stops declaring the type Excalidraw writes stops being a document Excalidraw
+ * reads.
  */
 export const EXCALIDRAW_MIME = "application/vnd.excalidraw+json";
 
 /**
- * The filename an `.excalidraw` download is offered under.
+ * The extension NextDraw's own documents carry.
+ *
+ * Decided by the user on 2026-11-21: the file that is downloaded is called
+ * `.nextdraw`. What is written inside it does not change — the envelope is the one
+ * Excalidraw reads (`type` and `version`), so the file still opens in the reference
+ * application, and the file that comes back from there still opens here.
+ */
+export const NEXTDRAW_EXTENSION = ".nextdraw";
+
+/**
+ * The extension the reference's documents carry, which this one still reads.
+ *
+ * Not history to be tidied away: a drawing made in Excalidraw is a drawing the user
+ * has, and the extension is the only thing that tells it apart from ours before the
+ * bytes are read.
+ */
+export const EXCALIDRAW_EXTENSION = ".excalidraw";
+
+/**
+ * The extensions the Open door takes.
+ *
+ * Ours and the reference's, in that order: the name we chose comes first because it
+ * is the one we write, and the other is still accepted because refusing it would make
+ * the name cost the user the files they already have.
+ *
+ * The extension is what the picker and the drop door look at; it is not what decides
+ * whether a file is a document. That is the kernel's question, asked of the bytes.
+ */
+export const OPEN_EXTENSIONS = Object.freeze([NEXTDRAW_EXTENSION, EXCALIDRAW_EXTENSION]);
+
+/**
+ * What the Open door's file input accepts.
+ *
+ * The two drawing extensions, the type the drawing declares — so a file the system
+ * knows by its type and not by its name is offered too — and the PNG that can carry
+ * a scene inside it.
+ */
+export const OPEN_ACCEPT = Object.freeze([
+    ...OPEN_EXTENSIONS,
+    EXCALIDRAW_MIME,
+    ".png",
+    "image/png",
+]);
+
+/**
+ * The filename a download is offered under.
  *
  * Not a per-document name: the document does not know its own name — upstream keeps
  * that in the browser, not in the file — and inventing one here would be a claim the
  * kernel cannot make. A user who wants a name renames the file after the download,
  * which is what every other drawing application makes them do.
  */
-export const EXCALIDRAW_NAME = "nextdraw.excalidraw";
+export const NEXTDRAW_NAME = "nextdraw.nextdraw";
 
 /**
  * The document text the session would save.
@@ -73,7 +122,7 @@ export function documentTextFor(session) {
 export function saveDocumentFile(
     session,
     {
-        name = EXCALIDRAW_NAME,
+        name = NEXTDRAW_NAME,
         doc = globalThis.document,
         url = globalThis.URL,
         mark = null,
@@ -94,8 +143,8 @@ export function saveDocumentFile(
  * asking the kernel rather than checking the bytes here. The error is raised for the
  * caller to report, because the caller is the only one who can tell the user.
  *
- * `file.text()` decodes as UTF-8, which is what an `.excalidraw` file is: JSON, in
- * UTF-8. A file that is not — a picture renamed to `.excalidraw` — decodes into
+ * `file.text()` decodes as UTF-8, which is what a document is: JSON, in
+ * UTF-8. A file that is not — a picture renamed to `.nextdraw` — decodes into
  * nonsense, and the kernel refuses it.
  *
  * The size of the file is asked about before any of that: a file that is too long
@@ -106,12 +155,18 @@ export function saveDocumentFile(
  * The kernel's answer comes back with the file's text: the report says what the
  * reader had to do to open the document, and the caller decides what to tell the
  * user about it. See [`describeOpen`].
+ *
+ * `say` is the page's translator (`key, source → words of the locale`), the same
+ * one the wiring hands to every notice the user reads. Its default answers with
+ * the source, so a caller without a locale still hears the English it always
+ * heard — and a refusal the user reads is never a raw brand string.
  */
 export async function openDocumentFile(
     file,
     session,
     insertLibrary = null,
     confirmReplace = null,
+    say = (_key, source) => source,
 ) {
     // The size of a file is known before its text is read: the browser asks the
     // file system, not the file. The fence that says how long a document may be
@@ -128,7 +183,10 @@ export async function openDocumentFile(
         ? await extractPngScene(file, { checkDocumentBytes: (bytes) => session.checkDocumentBytes(bytes) })
         : await file.text();
     if (isPng && text === null) {
-        throw new Error("PNG file does not contain an embedded Excalidraw scene");
+        throw new Error(say(
+            "file.pngNoScene",
+            "this PNG does not carry an embedded scene",
+        ));
     }
     // A library file is not a drawing, and loading it as one would replace the
     // user's drawing with an envelope their drawing cannot be. The type word
@@ -271,7 +329,7 @@ export function describeOpen(report, plural = null) {
  * not the document's own download name, so a file the user recovered is never
  * mistaken for the drawing on the screen.
  */
-export const RECOVERED_NAME = "nextdraw-recovered.excalidraw";
+export const RECOVERED_NAME = "nextdraw-recovered.nextdraw";
 
 /**
  * Hand a drawing we could not open to the user as a file.
@@ -289,16 +347,26 @@ export const RECOVERED_NAME = "nextdraw-recovered.excalidraw";
  * mistaken for the drawing on the screen.
  *
  * @param {string} text The bytes of the drawing.
- * @param {{name?: string, picker?: unknown, doc?: unknown, url?: unknown}} [options]
+ * @param {{name?: string, picker?: unknown, doc?: unknown, url?: unknown, say?: (key: string, source: string) => string}} [options]
  * @returns {Promise<{confirmed: boolean, offered: boolean}>}
  */
 export async function handOverRecoveredDocument(
     text,
-    { name = RECOVERED_NAME, picker, doc = globalThis.document, url = globalThis.URL } = {},
+    {
+        name = RECOVERED_NAME,
+        picker,
+        doc = globalThis.document,
+        url = globalThis.URL,
+        say = (_key, source) => source,
+    } = {},
 ) {
     return handOverText(text, name, {
         mime: EXCALIDRAW_MIME,
-        description: "Excalidraw drawing",
+        // The bytes are the reference's envelope and stay so; the label of the
+        // type in the dialog is what a person reads, and it is ours. The filter
+        // beside it is the extension, not this word, so the reference still
+        // opens the file.
+        description: say("document.typeLabel", "NextDraw drawing"),
         doc,
         url,
         picker,

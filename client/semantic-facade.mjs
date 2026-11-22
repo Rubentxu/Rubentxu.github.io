@@ -108,31 +108,18 @@ export function createSemanticFacade({ session, viewOnly = () => false, newId = 
             if (element === undefined) {
                 return refused("unknown_id");
             }
-            // The arrows already carry their bindings in the snapshot the
-            // cache just gave us; asking the kernel twice would project the
-            // scene twice for an answer we hold.
-            const outgoing = { targets: [], freeEnd: false };
-            const incoming = { targets: [], freeEnd: false };
-            for (const candidate of elements) {
-                if (candidate.directed !== true) {
-                    continue;
-                }
-                const start = candidate.bindings?.start ?? null;
-                const end = candidate.bindings?.end ?? null;
-                if (start === id) {
-                    outgoing.freeEnd = outgoing.freeEnd || end === null;
-                    if (end !== null && !outgoing.targets.includes(end)) {
-                        outgoing.targets.push(end);
-                    }
-                }
-                if (end === id) {
-                    incoming.freeEnd = incoming.freeEnd || start === null;
-                    if (start !== null && !incoming.targets.includes(start)) {
-                        incoming.targets.push(start);
-                    }
-                }
+            // One crossing, and the kernel's rule: both directions come back
+            // from the same composition `navigate` answers `incoming` and
+            // `outgoing` with, so the facade cannot disagree with it. A door
+            // that throws (a pkg without the export, a kernel refusal) is the
+            // header's typed negative, not an exception on the caller.
+            let answer;
+            try {
+                answer = JSON.parse(session.semanticConnections(id));
+            } catch (error) {
+                return refused(`rejected: ${error?.message ?? error}`);
             }
-            return ok({ data: { outgoing, incoming } });
+            return ok({ data: { outgoing: answer.outgoing, incoming: answer.incoming } });
         },
         navigate(id, relation) {
             if (!isText(id)) {

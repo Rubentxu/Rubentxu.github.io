@@ -216,6 +216,9 @@ export function bindDocumentIo(deps) {
                             { name: file.name },
                         ),
                     ),
+                // The refusals this door raises are words the user reads, so they
+                // go through the page's translator.
+                say,
             );
             if (cancelled) {
                 statusLine.clearProblem();

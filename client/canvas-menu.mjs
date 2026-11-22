@@ -44,6 +44,7 @@
 // open, as upstream's theme control does.
 
 import { CHROME_ICONS } from "./chrome-icons.mjs";
+import { OPEN_ACCEPT } from "./document-io.mjs";
 
 /** The chevron the Preferences row wears, upstream's `dropdown-menu__submenu-trigger-icon`. */
 const SUBMENU_CHEVRON = Object.freeze(
@@ -76,7 +77,7 @@ export const CANVAS_MENU = Object.freeze([
                 id: "canvas-menu-save",
                 icon: "save",
                 label: "Save",
-                title: "Download this drawing as an .excalidraw file",
+                title: "Download this drawing as a .nextdraw file",
                 attributes: Object.freeze({ "data-save-document": "" }),
             },
             {
@@ -322,7 +323,7 @@ export function buildCanvasMenu({ createElement, panel }) {
     // panel because the image importer looks its input up in this root.
     const openInput = createElement("input");
     openInput.setAttribute("type", "file");
-    openInput.accept = ".excalidraw,application/vnd.excalidraw+json,.png,image/png";
+    openInput.accept = OPEN_ACCEPT.join(",");
     openInput.setAttribute("data-open-file", "");
     openInput.hidden = true;
     const importInput = createElement("input");

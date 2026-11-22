@@ -41,6 +41,7 @@ import * as multipointMode from "./multipoint.mjs";
 import {
     TOOLS,
     arrowLabelJsonFor,
+    birthTextFor,
     boundTextJsonFor,
     consultsChrome,
     cursorFor,
@@ -110,6 +111,9 @@ export function isRefusal(error, tag) {
  * @param {{ take: (session: object) => object | null } | null} [page.frames] the frame cache the
  *   paint reads, asked for the selected element's chrome when the hover needs its angle. It is the
  *   same frame the painter drew, so the cursor and the handle under the pointer cannot disagree.
+ * @param {{ snapshot: () => object } | null} [page.stylePreferences] the mount's drawing
+ *   preferences (TASK-294): a creation that carries a style reads it once at the press and never
+ *   again on the sampling path.
  * @returns {object} the handlers boot binds and the questions the page asks.
  */
 export function createGesturePipeline({
@@ -124,6 +128,13 @@ export function createGesturePipeline({
     // default) hands the page back to the selection.
     toolLock = () => false,
     canvasRect = { get: () => canvas.getBoundingClientRect(), invalidate() {} },
+    // The instance's drawing preferences (TASK-294): the style a new element is
+    // born with. A creation that carries a style reads it ONCE at the press —
+    // the press's gesture (freehand or draw) snapshots it and lives on that
+    // snapshot, so the preview/sampling loops never look at the store
+    // (TASK-295 AC6, TASK-296). `null` in a unit that has none: the element is
+    // born at the kernel's defaults.
+    stylePreferences = null,
     // The frame cache, once the page has built it. The hover asks it for the
     // selected element's chrome record — the one the painter drew — rather than
     // re-deriving the element's turn from the scene. `null` in a unit that has
@@ -273,6 +284,10 @@ export function createGesturePipeline({
             const json = linearJsonFor(state.tool, id, state.origin, points, {
                 arrowType: state.arrowType,
                 polygon: closed,
+                // The style of the press that opened the mode, carried by the mode's state
+                // since (TASK-295): the click-by-click drawing is born in the same style a
+                // drag of the same tool would have landed, and one insert is one undo step.
+                style: state.style ?? null,
             });
             if (json !== null) {
                 settleCreation(json, id, session);
@@ -876,6 +891,9 @@ export function createGesturePipeline({
             session,
             sceneX: (bounds[0] + bounds[2]) / 2,
             sceneY: (bounds[1] + bounds[3]) / 2,
+            // The note's label is the container's road: the sheet stays plain
+            // and the commit takes the kernel's fields (TASK-297 AC5).
+            style: null,
             onCommit: (body) => {
                 if (!body || body.trim() === "") {
                     return;
@@ -894,6 +912,12 @@ export function createGesturePipeline({
 
     function resolvePendingText(pending, session, ctx) {
         const at = pending.originScene;
+        // The press's snapshot, resolved once for this birth (TASK-297 AC2): the
+        // sheet the user types into wears the same ink, size and family the element
+        // will be born with. `null` — a session without preferences, the roads that
+        // existed before the store — is the untouched sheet and the untouched
+        // document.
+        const birth = birthTextFor(pending.style ?? null);
         if (pending.dragging) {
             const id = mintElementId();
             const x = pending.leftOfOrigin ? at[0] - pending.width : at[0];
@@ -902,6 +926,7 @@ export function createGesturePipeline({
                 sceneX: at[0],
                 sceneY: at[1],
                 fixedWidth: pending.width,
+                style: pending.style ?? null,
                 onCommit: (body) => {
                     // A body that is only white space is no birth at all,
                     // the way the click's road keeps.
@@ -910,7 +935,7 @@ export function createGesturePipeline({
                     }
                     try {
                         settleCreation(
-                            createdTextJsonFor(id, body, x, at[1], pending.width),
+                            createdTextJsonFor(id, body, x, at[1], pending.width, birth),
                             id,
                             session,
                         );
@@ -931,12 +956,19 @@ export function createGesturePipeline({
             // The label road: the kernel wraps the body at the container's
             // width, measures it, grows the shape if it does not fit and
             // centres the label in it, so the place this mount opens at is
-            // only where the caret is; the box is the kernel's answer.
+            // only where the caret is; the box is the kernel's answer. The
+            // label keeps the kernel's own birth fields — the press's style is
+            // a *new element* fact, and a bound label is the container's
+            // (TASK-297 AC5).
             const labelId = mintElementId();
             mountTextEditor({
                 session,
                 sceneX: at[0],
                 sceneY: at[1],
+                // `null` — not `undefined`: the sheet must not fall back to the
+                // store's look, because a bound label is the container's road
+                // and is committed with the kernel's own fields (TASK-297 AC5).
+                style: null,
                 onCommit: (body) => {
                     if (!body || body.trim() === "") {
                         return;
@@ -966,12 +998,13 @@ export function createGesturePipeline({
             session,
             sceneX: at[0],
             sceneY: at[1],
+            style: pending.style ?? null,
             onCommit: (body) => {
                 if (!body || body.trim() === "") {
                     return;
                 }
                 try {
-                    settleCreation(createdTextJsonFor(id, body, at[0], at[1]), id, session);
+                    settleCreation(createdTextJsonFor(id, body, at[0], at[1], null, birth), id, session);
                     paint(session, ctx);
                 } catch (error) {
                     statusLine.setProblem(`insert failed: ${error.message ?? error}`);
@@ -1404,7 +1437,11 @@ export function createGesturePipeline({
                 // The label road joins the deferral: a drag that starts on a
                 // container is not the click's gesture — it is the birth of a
                 // free text the drag sizes, and the release decides
-                // (`App.textTool.ts`, the pending road's `resolvePending`).
+                // (`App.textTool.ts`, the pending road's `resolvePending`). The
+                // press's `style` is the one reading of the preferences for the
+                // whole text turn (TASK-297): the sheet is opened wearing it and
+                // the free-text birth is written with it, while the label roads
+                // keep the kernel's own answer for a bound text (AC5).
                 pendingText = {
                     owner: event.pointerId,
                     originScreen: start,
@@ -1413,6 +1450,7 @@ export function createGesturePipeline({
                     dragging: false,
                     width: 0,
                     leftOfOrigin: false,
+                    style: stylePreferences === null ? null : stylePreferences.snapshot(),
                 };
                 canvas.setPointerCapture(event.pointerId);
                 return;
@@ -1432,6 +1470,7 @@ export function createGesturePipeline({
                 dragging: false,
                 width: 0,
                 leftOfOrigin: false,
+                style: stylePreferences === null ? null : stylePreferences.snapshot(),
             };
             canvas.setPointerCapture(event.pointerId);
             return;
@@ -1457,13 +1496,18 @@ export function createGesturePipeline({
             // The identity rides the press for the same reason the draw tool's does:
             // the trail the user is watching and the element the release inserts are
             // one element.
+            // The style rides the press for the same reason (TASK-296): the preview,
+            // the commit and its undo are one stroke, and a colour picked mid-drag
+            // belongs to the next one. The snapshot is this gesture's whole reading
+            // of the preferences — the sampling loop asks nothing.
             startGesture(
                 GESTURES.FREEDRAW,
                 event,
                 freedrawGesture.start(session, start, {
                     pressure: event.pressure,
                     pointerType: event.pointerType,
-                }, { id: mintElementId(), seed: freshSeed() }),
+                }, { id: mintElementId(), seed: freshSeed() },
+                stylePreferences === null ? null : stylePreferences.snapshot()),
             );
             canvas.setPointerCapture(event.pointerId);
             return;
@@ -1544,10 +1588,16 @@ export function createGesturePipeline({
             // so the id, the seed and the arrow kind are minted here, where
             // the tool and its sub-type are in hand, and not re-asked at the
             // release.
+            // The style rides the press for the same reason (TASK-295): this one
+            // `snapshot()` is the whole reading of the preferences for the gesture —
+            // preview, commit and the click-by-click mode all live on it, and nothing
+            // on the move path asks the store again. A colour picked while the pointer
+            // is down is therefore the *next* element's colour.
             startGesture(GESTURES.DRAW, event, drawGesture.start(toolState.currentTool, start, {
                 id: mintElementId(),
                 seed: freshSeed(),
                 arrowType: toolState.arrowType,
+                style: stylePreferences === null ? null : stylePreferences.snapshot(),
                 ...(toolState.currentTool === TOOLS.stickynote ? { created: dateNowMs() } : {}),
             }));
             canvas.setPointerCapture(event.pointerId);
@@ -2091,11 +2141,15 @@ export function createGesturePipeline({
                 alt: event.altKey === true,
             });
                 if (drawn.kind === "multipoint") {
+                    // The mode inherits the press's style (AC3): the clicks that follow add
+                    // corners to a drawing whose look was decided when the pointer went down,
+                    // and the release writes it in one insert like any dragged shape.
                     multipoint = multipointMode.begin(
                         completed.tool,
                         toolState.arrowType,
                         drawn.from,
                         session.zoom(),
+                        drawn.style ?? null,
                     );
                     multipointInZone = false;
                     syncCursor();

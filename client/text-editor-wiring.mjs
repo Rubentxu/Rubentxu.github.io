@@ -22,7 +22,7 @@
 // The open editor, if any: a second double click while one is up does nothing, because
 // the editor's own blur removes it before a new one is asked for.
 
-import { arrowLabelJsonFor, boundTextJsonFor, createdTextJsonFor } from "./tools.mjs";
+import { arrowLabelJsonFor, birthTextFor, boundTextJsonFor, createdTextJsonFor } from "./tools.mjs";
 import { elementIdAt, frameNameAt, openTextEditor } from "./text-edit.mjs";
 import { releaseTarget, vertexEditableIdAt } from "./vertex-edit.mjs";
 import { editTarget, textToolTargetAt } from "./bound-text.mjs";
@@ -32,14 +32,27 @@ import { bindColourPicker } from "./colour-picker.mjs";
 /**
  * @typedef {object} TextCreationDeps
  * @property {object} document
+ * @property {object} [preferences] this app instance's style preferences, the
+ *   fallback birth when a mount request carries no press snapshot (TASK-297).
  */
 
 /**
- * The line box a free text is born with: the size the birth is written with
- * (`createdTextJsonFor`: `fontSize` 20, `lineHeight` 1.25) times the line
- * height — upstream's `getLineHeightInPx` (`App.tsx:757`).
+ * The line height multiplier a text carries (`lineHeight: 1.25`, the field
+ * `createdTextJsonFor` writes and the kernel round-trips).
  */
-const FREE_TEXT_LINE_BOX = 25;
+const TEXT_LINE_HEIGHT = 1.25;
+
+/**
+ * The line box a free text is born with at a given size: the size times the
+ * line height — upstream's `getLineHeightInPx` (`App.tsx:757`). The untouched
+ * preference names 20 (`default_text_font_size`, `element.rs`), which is the
+ * 25 the sheet has always opened with.
+ *
+ * @param {number} fontSize the size the birth is written with.
+ * @returns {number} the scene-unit line box.
+ */
+const freeTextLineBox = (fontSize) =>
+    (Number.isFinite(fontSize) ? fontSize : 20) * TEXT_LINE_HEIGHT;
 
 /**
  * The width of an empty text, and so of the sheet that writes it: upstream's
@@ -62,78 +75,50 @@ const EMPTY_TEXT_WIDTH = 8;
  * typed, because the refusal is the settle's rule, not the sheet's.
  *
  * @param {TextCreationDeps} deps
- * @returns {{ mountTextEditor: (request: { session: object, sceneX: number, sceneY: number, onCommit: (body: string) => void, onCancel?: () => void }) => void }}
+ * @returns {{ mountTextEditor: (request: { session: object, sceneX: number, sceneY: number, onCommit: (body: string) => void, onCancel?: () => void, fixedWidth?: number, style?: object | null }) => void }}
  */
 export function bindTextCreation(deps) {
-    const { document } = deps;
+    const { document, preferences = null } = deps;
+    // The birth style the sheet wears: the caller's press snapshot when it has one
+    // (the pipeline reads the store once at the text press, TASK-297), the mount's
+    // store read once here otherwise. `null` — no caller style and no store — is the
+    // road that existed before the preferences: an inherit-font sheet at the
+    // kernel's own 20 px line box.
+    const birthSnapshot = (requestStyle) => {
+        if (requestStyle !== undefined) {
+            return requestStyle;
+        }
+        return preferences === null ? null : preferences.snapshot();
+    };
+    // The CSS the sheet writes in: the family name the panel's buttons already
+    // wear (`button.style.fontFamily = choice` in the type panel), quoted so a
+    // name with a space is one family and not a list.
+    const sheetFont = (snapshot, zoom) => {
+        if (snapshot === null || snapshot === undefined) {
+            return undefined;
+        }
+        const family = typeof snapshot.fontFamily === "string"
+            ? JSON.stringify(snapshot.fontFamily)
+            : null;
+        if (family === null) {
+            return undefined;
+        }
+        const size = Number.isFinite(snapshot.fontSize) ? snapshot.fontSize : 20;
+        return `${size * zoom}px ${family}`;
+    };
     // The birth editor has no binder-supplied theme: the page's root carries
     // it (`theme.mjs`), and a document with no root — the unit road's fake —
     // is a light page.
     const dark = () => document.documentElement?.dataset?.theme === "dark";
     const textEditLayer = document.getElementById("text-edit-layer");
     let activeTextEditor = null;
-    /**
-     * What the editor over `id` should wear: the element's box, its type and
-     * its ink.
-     *
-     * The box is the render list's, not the document's, because the render list
-     * is where the kernel has already resolved the font family to a CSS stack
-     * (`crates/nextdraw-core/src/font.rs`, upstream's `getFontFamilyString`)
-     * and laid the text out at the zoom the canvas is painting. The document
-     * answers the two things the op does not carry: the ink the element was
-     * given and whether the text auto-sizes. A road with no op (the fake page
-     * of the unit suite, an element the renderer has not seen) keeps the
-     * click's own position: the editor still opens, it just has no box to
-     * cover.
-     *
-     * @param {string} id the text element.
-     * @returns {object|null}
-     */
-    const textEditorBox = (id) => {
-        const op = frames?.take?.(session)?.items?.find((item) => item?.Text?.id === id)?.Text;
-        let element = null;
-        try {
-            element = JSON.parse(session.toJson() ?? "null")?.elements?.find((candidate) => candidate.id === id) ?? null;
-        } catch {
-            element = null;
-        }
-        if (!op && !element) {
-            return null;
-        }
-        // The element's **box**, not the text run's: upstream's editor covers
-        // the element (`textWysiwyg.tsx` writes the element's `width`/`height`
-        // and lets `textAlign` place the words inside it). The render op is the
-        // only place the font family is already a CSS stack, and it carries the
-        // line advance the text was painted with; the box comes from the
-        // document.
-        const [zeroX] = session.sceneToScreen(0, 0);
-        const [unitX] = session.sceneToScreen(1, 0);
-        const zoom = unitX - zeroX;
-        const box = element ?? op;
-        const [left, top] = session.sceneToScreen(box.x, box.y);
-        const [right, bottom] = session.sceneToScreen(box.x + box.width, box.y + box.height);
-        const fontSize = element?.fontSize ?? op?.fontSize;
-        const lineAdvance = Number.isFinite(op?.lineAdvance)
-            ? op.lineAdvance
-            : Number.isFinite(fontSize) && Number.isFinite(element?.lineHeight)
-              ? fontSize * element.lineHeight
-              : undefined;
-        return {
-            x: left,
-            y: top,
-            width: Math.max(right - left, 1),
-            height: Math.max(bottom - top, 1),
-            font: Number.isFinite(op?.fontSize) ? `${op.fontSize * zoom}px ${op.fontFamily}` : undefined,
-            lineHeight: Number.isFinite(lineAdvance) ? lineAdvance * zoom : undefined,
-            textAlign: element?.textAlign ?? op?.textAlign,
-            // A bound label is the container's width and wraps; a standalone
-            // text auto-sizes unless the document said otherwise.
-            autoResize: element === null || (element.autoResize !== false && element.containerId == null),
-            strokeColour: typeof element?.strokeColor === "string" ? element.strokeColor : undefined,
-        };
-    };
+    // The creation editor has no box to read: there is no element yet. The
+    // element-reading `textEditorBox` lives with the double-click binder
+    // (`bindTextEditing`), which is the only road that mounts over an existing
+    // element (TASK-297: the copy that sat here named `frames`/`session`, which
+    // this binder was never handed, and nothing called it).
     return {
-        mountTextEditor({ session, sceneX, sceneY, onCommit, onCancel, fixedWidth }) {
+        mountTextEditor({ session, sceneX, sceneY, onCommit, onCancel, fixedWidth, style }) {
             if (activeTextEditor) {
                 return;
             }
@@ -145,6 +130,14 @@ export function bindTextCreation(deps) {
             // grows with the body.
             const fixed = Number.isFinite(fixedWidth) && fixedWidth > 0;
             const zoom = session.zoom();
+            // The sheet wears the birth the press froze: the chosen ink, size
+            // and family are what the caret and the first word show, so the
+            // editor reflects the type preference the moment it opens
+            // (TASK-297 AC2). With no birth to wear — no store, no request, a
+            // road that never had one — the sheet keeps its plain look and the
+            // born element takes the kernel's answer.
+            const birth = birthSnapshot(style);
+            const sheetFontSize = Number.isFinite(birth?.fontSize) ? birth.fontSize : 20;
             activeTextEditor = openTextEditor({
                 container: textEditLayer,
                 // The sheet sits over the element it writes: upstream's
@@ -160,13 +153,13 @@ export function bindTextCreation(deps) {
                 // A birth has no element yet, so it has no box to cover: it opens
                 // as the empty text's own box — a caret wide, one line tall —
                 // and grows with the body, the way upstream's wysiwyg does. Its
-                // ink is the default text ink, put through the theme's filter,
-                // so the caret and the first word are the colours the born
-                // element will be painted with.
+                // ink is the type preference's, so the caret and the first word
+                // are the colours the born element will be painted with.
+                font: sheetFont(birth, zoom),
                 width: fixed ? fixedWidth * zoom : EMPTY_TEXT_WIDTH,
-                height: FREE_TEXT_LINE_BOX * zoom,
+                height: freeTextLineBox(sheetFontSize) * zoom,
                 autoResize: !fixed,
-                strokeColour: "#1e1e1e",
+                strokeColour: typeof birth?.strokeColor === "string" ? birth.strokeColor : "#1e1e1e",
                 dark: dark(),
                 // The creation is a text road: it submits the way upstream's
                 // wysiwyg does — Escape and Ctrl/Cmd+Enter, plain Enter as
@@ -200,6 +193,7 @@ export function bindTextCreation(deps) {
  * @property {{ signal: AbortSignal }} lifecycle
  * @property {() => string} [theme] the theme on the page, for the swatches'
  *   dark colours.
+ * @property {object} preferences this app instance's drawing preferences.
  */
 
 /**
@@ -209,7 +203,7 @@ export function bindTextCreation(deps) {
  * @returns {{ syncStrokeColour: Function, syncBackgroundColour: Function }}
  */
 export function bindInks(deps) {
-    const { document, session, ctx, paint, statusLine, renderStatus, lifecycle, text, theme = () => "light" } = deps;
+    const { document, session, ctx, paint, statusLine, renderStatus, lifecycle, text, theme = () => "light", preferences } = deps;
     // The two inks: a palette and a hex entry each, over the same write door.
     const bindInk = (rowId, property) =>
         bindColourPicker({
@@ -217,6 +211,7 @@ export function bindInks(deps) {
             property,
             session,
             paintFn: () => paint(session, ctx),
+            preferences,
             createElement: (tag) => document.createElement(tag),
             signal: lifecycle.signal,
             text,
@@ -246,6 +241,9 @@ export function bindInks(deps) {
  * @property {() => void} renderStatus
  * @property {{ signal: AbortSignal }} lifecycle
  * @property {() => string} [theme] the theme on the page, for the editor ink.
+ * @property {object} [preferences] this app instance's style preferences, read
+ *   once when a free text opens (TASK-297). Without it the double-click birth
+ *   is the kernel's own.
  */
 
 /**
@@ -257,7 +255,7 @@ export function bindTextEditing(deps) {
     const {
         canvas, document, session, ctx, frames, viewOnlyNow, canvasPointFromEvent,
         paint, statusLine, renderStatus, lifecycle, mountTextEditor, platform = "",
-        theme = () => "light",
+        theme = () => "light", preferences = null,
     } = deps;
     const hasCommandModifier = (event) =>
         event.ctrlKey === true || (event.metaKey === true && /Mac|iPhone|iPad|iPod/i.test(platform));
@@ -348,18 +346,26 @@ export function bindTextEditing(deps) {
         // at the same place. The measured double click on the empty canvas
         // puts its text at (400, 287.5) for a pointer at (400, 300).
         const sceneX = pointerX;
-        const sceneY = pointerY - FREE_TEXT_LINE_BOX / 2;
+        // The preference is read **once at the open** (TASK-297): the seat, the
+        // sheet's look and the born element all wear the same frozen snapshot,
+        // and a picker click while the sheet is up cannot shift the birth
+        // mid-edit. With no store (the unit road's fake) the birth is the
+        // kernel's own: size 20, ink #1e1e1e.
+        const snapshot = preferences === null ? null : preferences.snapshot();
+        const birth = birthTextFor(snapshot);
+        const sceneY = pointerY - freeTextLineBox(birth?.fontSize ?? 20) / 2;
         mountTextEditor({
             session,
             sceneX,
             sceneY,
+            style: snapshot,
             onCommit: (body) => {
                 if (!body.trim()) {
                     return;
                 }
                 const id = crypto.randomUUID();
                 try {
-                    session.insert(createdTextJsonFor(id, body, sceneX, sceneY), undefined);
+                    session.insert(createdTextJsonFor(id, body, sceneX, sceneY, null, birth), undefined);
                     session.setSelection([id]);
                     paint(session, ctx);
                 } catch (error) {

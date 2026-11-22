@@ -14,9 +14,11 @@
 // The contract says clients send *actions* — but the page's edits go through
 // ~40 different session methods, and wrapping each by hand is a second list
 // waiting to drift. So the link instruments the session once, generically:
-// every call that moves `documentRevision()` was a mutation, and only four
-// of those travel as precise verbs (`insert`, `delete`, `deleteAll`,
-// `translateAll`, `group` — the relay's own vocabulary). Anything else
+// every call that moves `documentRevision()` was a mutation, and only five
+// of those travel as precise verbs (`insert`, `delete`, `translateAll`,
+// `group`, `setStyle` — the relay's own vocabulary; `deleteAll` means the
+// caller's selection, which no argument-less action can say, so it rides
+// the fallback like `clearScene` does — TASK-271). Anything else
 // records the **whole document** as one `{ op: "document" }` action — the
 // decision's "last batch wins", honest about its granularity. A precise verb
 // from each of two clients lands twice, because actions compose; a document
@@ -39,7 +41,7 @@
 // the document in clear, and TASK-45 owns what that means.
 
 /** The verbs that travel as themselves, in the relay's own words. */
-const PRECISE_VERBS = new Set(["insert", "delete", "deleteAll", "translateAll", "group"]);
+const PRECISE_VERBS = new Set(["insert", "delete", "translateAll", "group", "setStyle"]);
 
 /**
  * Wrap a session so every mutation reports itself.
@@ -82,10 +84,6 @@ export function instrumentSession(real, onMutation) {
  * @param {string} deps.clientId This page's stable id in the room.
  * @param {(path: string, body?: object) => Promise<object>} deps.post The POST door.
  * @param {(path: string) => Promise<object>} deps.get The GET door.
- * @param {string} [deps.token] The room's capability, when the room was
- *   planted with one. It rides on every path as `?token=` — the relay
- *   answers a guarded room's doors only to it, and a request without it is
- *   a 403 the round handles like any other refusal.
  * @param {{seal: (value: object) => Promise<string>, open: (sealed: string) => Promise<object>}} [deps.presenceCodec]
  *   The room key's codec, when the room has a key. Presence is the one
  *   channel the relay only re-forwards, so it is the one channel that can
@@ -95,22 +93,24 @@ export function instrumentSession(real, onMutation) {
  *   reported.
  * @returns {object} The link.
  */
-export function createCollabLink({ roomUrl, roomId, clientId, post, get, token, presenceCodec }) {
+export function createCollabLink({ roomUrl, roomId, clientId, post, get, presenceCodec }) {
     const base = `${roomUrl}/room/${encodeURIComponent(roomId)}`;
-    // Every door of the room carries the capability when the room has one;
-    // with none, the paths are the paths the loopback demo has always had.
-    const door = (name) => `${base}/${name}${token === undefined ? "" : `?token=${encodeURIComponent(token)}`}`;
+    // The doors are the paths and nothing else. The room's capability is not
+    // one of their parts: a path is what survives in an access log, in the
+    // page's own network panel and in a copied link, and a credential must
+    // not. The transport (`client/room-wiring.mjs`) carries it on the
+    // `x-room-token` header the relay reads first, and a guarded room answers
+    // a request without it with the 403 the round handles like any refusal.
+    const door = (name) => `${base}/${name}`;
     /**
      * The document door with the revision this link knows, when it knows one:
      * the room answers a read whose revision still stands without its
      * document.
      *
-     * @returns {string} The path, `?token=` and `&rev=` included as they apply.
+     * @returns {string} The path, `?rev=` included as it applies.
      */
-    const documentDoor = () => {
-        const path = door("document");
-        return roomRevision === null ? path : `${path}${path.includes("?") ? "&" : "?"}rev=${encodeURIComponent(roomRevision)}`;
-    };
+    const documentDoor = () =>
+        roomRevision === null ? door("document") : `${door("document")}?rev=${encodeURIComponent(roomRevision)}`;
     /** The action descriptors waiting for the next batch. */
     let queue = [];
     /** Whether a mutation fell outside the precise verbs. */
@@ -232,16 +232,22 @@ export function createCollabLink({ roomUrl, roomId, clientId, post, get, token, 
                 queue.push({ op: "delete", id: args[0] });
                 return;
             }
-            if (verb === "deleteAll") {
-                queue.push({ op: "deleteAll" });
-                return;
-            }
             if (verb === "translateAll") {
                 queue.push({ op: "translateAll", ids: args[0], dx: args[1], dy: args[2] });
                 return;
             }
             if (verb === "group") {
                 queue.push({ op: "group", ids: args[0], groupId: args[1] });
+                return;
+            }
+            if (verb === "setStyle") {
+                // The patch arrives as the JSON text `stylePatch()` minted
+                // (only a call the kernel accepted moves the revision, so the
+                // text is valid here by construction); re-parsing keeps the
+                // batch plain JSON all the way to the relay, which strings it
+                // back for the same wasm door. Absolute values, no coordinates
+                // — a re-applied patch converges (TASK-271).
+                queue.push({ op: "setStyle", ids: args[0], patch: JSON.parse(args[1]) });
                 return;
             }
             // Anything else the kernel can mutate with is still *this

@@ -60,7 +60,14 @@ export const FONT_SIZES = Object.freeze({
     xl: 36,
 });
 
-/** The reference's font family ids. */
+/**
+ * The reference's font family ids.
+ *
+ * These are the **format's** names: the index is the contract the document carries
+ * and the names are the ones the specification gives it. The name the user sees for
+ * an index is the kernel's (`crates/nextdraw-core/src/font.rs`), and the chart
+ * measures with that one — this table only says which index a chart asks for.
+ */
 export const FONT_FAMILY = Object.freeze({
     Virgil: 1,
     Helvetica: 2,

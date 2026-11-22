@@ -1,16 +1,27 @@
 // Whether a pasted line is a web embed, and the size it would land at.
 //
-// # Why the table lives here and nowhere else
+// # Where the rule lives, and why nothing here keeps a copy of it
 //
 // The paste's third road (`App.clipboard.ts:236-279`, the pinned clone) is
 // "Pure embeddable URLs": when every non-empty line of the pasted text is a
-// URL the table admits, the paste becomes one web embed per line instead of
-// a text. Whether a line qualifies is the reference's own question, asked by
-// `embeddableURLValidator` (`packages/element/src/embeddable.ts:505`) over
-// `ALLOWED_DOMAINS` (`:134-151`) — so the table here is that table, read
-// verbatim, and the regular expressions are those regular expressions. A
-// retype from memory would drift from the reference one provider at a time,
-// and the drift would be invisible until a paste did the wrong thing.
+// URL the policy admits, the paste becomes one web embed per line instead of
+// a text. Which URLs those are is a rule, and the rule has one authority: the
+// kernel (`crates/nextdraw-core/src/embeddable.rs`), which answers it for a
+// frame at render time (`embeddablesView`) and publishes the same answer at
+// the boundary as `embeddable_policy` (`crates/nextdraw-wasm/src/lib.rs`).
+// This module reads that answer instead of keeping a second copy of the list:
+// the table it used to carry, and the wildcard family it used to re-derive
+// from it, are gone. A classifier that re-derives the rule is the drift
+// waiting to happen, and the drift stays invisible until a paste does the
+// wrong thing.
+//
+// The answer crosses as an argument (`p-pure`): nothing here imports the glue,
+// so the classifier stays loadable by a reader that holds no WASM instance,
+// and a caller that supplies no answer gets no embed road at all. What stays
+// here is the browser's own half of the reference: the shapes the regular
+// expressions read (`packages/element/src/embeddable.ts`, the pinned clone),
+// the size each provider measures, and the embed code an address travels
+// inside.
 //
 // The element's size is the reference's `getEmbedLink` answer too: the
 // creation call takes `embedLink.intrinsicSize` for its width and height
@@ -53,62 +64,27 @@ const RE_REDDIT =
 const RE_REDDIT_EMBED =
     /^<blockquote[\s\S]*?\shref=["'](https?:\/\/(?:www\.)?reddit\.com\/[^"']*)/i;
 
-// `ALLOWED_DOMAINS`, `packages/element/src/embeddable.ts:134-151`, verbatim.
-const ALLOWED_DOMAINS = new Set([
-    "youtube.com",
-    "youtu.be",
-    "vimeo.com",
-    "player.vimeo.com",
-    "drive.google.com",
-    "figma.com",
-    "link.excalidraw.com",
-    "gist.github.com",
-    "twitter.com",
-    "x.com",
-    "*.simplepdf.eu",
-    "stackblitz.com",
-    "val.town",
-    "giphy.com",
-    "reddit.com",
-    "forms.microsoft.com",
-]);
-
 /**
- * The hostname the address names, when the table names it.
+ * The hostname an address names, against one hostname the caller supplied.
  *
- * `matchHostname`, `packages/element/src/embeddable.ts:442-467`, verbatim:
- * the `www.` prefix is read away, the bare domain is looked up, and then the
- * bare domain's first label is replaced with `*` and looked up again — so a
- * `foo.simplepdf.eu` meets the table's `*.simplepdf.eu` row. The reference
- * reads the address with the browser's own parser (`new URL`), and so does
- * this module.
+ * This is the caller's own law, not the kernel's: `validateEmbeddable` is a
+ * list the application hands in (`packages/element/src/embeddable.ts:505-552`),
+ * and the comparison is the reference's — the `www.` prefix is read away from
+ * both sides and the two bare spellings are asked whether they are the same.
+ * There is no wildcard here on purpose: the family rule (`*.simplepdf.eu`)
+ * belongs to the kernel's allowlist, the kernel publishes its answer already
+ * expanded, and a JS reader that expanded it again would be the second copy
+ * of the rule this module exists to stop being.
  *
  * @param {string} url the address to name.
- * @param {Set<string> | string} allowedHostnames the table, already bare.
- * @returns {string | null} the table row that answered, or `null`.
+ * @param {string} allowedHostname the one hostname the caller named.
+ * @returns {string | null} the hostname that answered, or `null`.
  */
-function matchHostname(url, allowedHostnames) {
+function matchHostname(url, allowedHostname) {
     try {
         const { hostname } = new URL(url);
-
         const bareDomain = hostname.replace(/^www\./, "");
-
-        if (allowedHostnames instanceof Set) {
-            if (ALLOWED_DOMAINS.has(bareDomain)) {
-                return bareDomain;
-            }
-
-            const bareDomainWithFirstSubdomainWildcarded = bareDomain.replace(
-                /^([^.]+)/,
-                "*",
-            );
-            if (ALLOWED_DOMAINS.has(bareDomainWithFirstSubdomainWildcarded)) {
-                return bareDomainWithFirstSubdomainWildcarded;
-            }
-            return null;
-        }
-
-        const bareAllowedHostname = allowedHostnames.replace(/^www\./, "");
+        const bareAllowedHostname = allowedHostname.replace(/^www\./, "");
         if (bareDomain === bareAllowedHostname) {
             return bareAllowedHostname;
         }
@@ -116,6 +92,38 @@ function matchHostname(url, allowedHostnames) {
         // ignore
     }
     return null;
+}
+
+/**
+ * What the injected policy answered about one address.
+ *
+ * The policy is the kernel's answer, handed in by the caller: a function from
+ * a link to `{render, sameOrigin}` — the shape `embeddable_policy` answers with
+ * (`crates/nextdraw-wasm/src/lib.rs:271`). A policy that is absent, that is not
+ * a function, that throws, or that answers with something whose `render` is not
+ * `true`, is a refusal: the road fails closed rather than falling back to a list
+ * this module no longer holds. The caller adapting the boundary's JSON to this
+ * shape is the caller's marshalling, and this module stays loadable without a
+ * live instance.
+ *
+ * @param {((link: string) => ({render?: boolean} | boolean) | null | undefined) | null | undefined} policy the injected answer.
+ * @param {string} url the address to ask about.
+ * @returns {boolean} whether the policy admits the address.
+ */
+function policyAdmits(policy, url) {
+    if (typeof policy !== "function") {
+        return false;
+    }
+    let answer;
+    try {
+        answer = policy(url);
+    } catch {
+        return false;
+    }
+    if (typeof answer === "boolean") {
+        return answer;
+    }
+    return answer?.render === true;
 }
 
 /**
@@ -161,17 +169,20 @@ export function maybeParseEmbedSrc(str) {
 /**
  * Whether the address is one the page may embed.
  *
- * `embeddableURLValidator`, `packages/element/src/embeddable.ts:505-552`:
- * with no app-provided validator (this application has none — the table is
- * the whole of the law) the answer is whether the address's host is one the
- * table names. The validator shapes the reference's props expose are kept
- * for the contract, though nothing here calls them yet.
+ * `embeddableURLValidator`, `packages/element/src/embeddable.ts:505-552`, with
+ * the reference's one difference: the law behind the answer is not kept here.
+ * The app-provided `validateEmbeddable` is read first, exactly as the reference
+ * reads it (a boolean, a function, a regular expression or a list of hostnames
+ * the caller wrote down — a parameter of the caller, not a copy of the kernel's
+ * table). With no app-provided law, the answer is the injected policy's: the
+ * kernel decides, and this module only relays. No policy, no admission.
  *
  * @param {string | null | undefined} url the address to judge.
  * @param {undefined} validateEmbeddable the app's own law, unused here.
+ * @param {((link: string) => ({render?: boolean} | boolean) | null | undefined)} [policy] the kernel's answer, injected.
  * @returns {boolean} whether the address may be embedded.
  */
-export function embeddableURLValidator(url, validateEmbeddable) {
+export function embeddableURLValidator(url, validateEmbeddable, policy) {
     if (!url) {
         return false;
     }
@@ -199,7 +210,7 @@ export function embeddableURLValidator(url, validateEmbeddable) {
         }
     }
 
-    return !!matchHostname(url, ALLOWED_DOMAINS);
+    return policyAdmits(policy, url);
 }
 
 /**
@@ -298,10 +309,18 @@ function driveVideoFor(url) {
  * falls through to the text road, because a user who copied a URL and a
  * note asked for both.
  *
+ * Whether a line's address is embeddable is the kernel's answer, injected as
+ * `policy`: the same `{render, sameOrigin}` the frame reads before it shows a
+ * page, so a paste cannot open a road the render would refuse. With no policy
+ * injected the road answers `null` for any text — a page whose kernel never
+ * answered is a page that embeds nothing, and it never falls back to a list
+ * kept here.
+ *
  * @param {string | null} text the pasted text, or `null` when the system said nothing.
+ * @param {((link: string) => ({render?: boolean} | boolean) | null | undefined)} [policy] the kernel's answer, injected.
  * @returns {Array<{url: string, width: number, height: number}> | null} the embeds to create, or `null`.
  */
-export function embeddableRoadFor(text) {
+export function embeddableRoadFor(text, policy) {
     if (typeof text !== "string") {
         return null;
     }
@@ -317,7 +336,7 @@ export function embeddableRoadFor(text) {
         .map((line) => maybeParseEmbedSrc(line))
         .filter(
             (url) =>
-                embeddableURLValidator(url, undefined) &&
+                embeddableURLValidator(url, undefined, policy) &&
                 (/^(http|https):\/\/[^\s/$.?#].[^\s]*$/.test(url) ||
                     embedShapeFor(url).type === "video"),
         );

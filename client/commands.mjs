@@ -91,6 +91,7 @@
 //   user with a selection and a locked element with no way to unlock it.
 
 import { isOnControl, matchesKey, queryNamesShortcut, spellKey } from "./keys.mjs";
+import { linearPointsEditable } from "./vertex-edit.mjs";
 import { viewKeyAction } from "./navigation.mjs";
 import { ALIGN_SHORTCUT_KEYS, TOOL_NUMBER_ALIASES, TOOL_SHORTCUT_KEYS, alignOpFor, toolForShortcut } from "./tools.mjs";
 
@@ -469,6 +470,18 @@ export const COMMANDS = Object.freeze([
         key: { key: "v", mod: true, shift: true },
         // The clipboard's text without the chart offer and without the Mermaid
         // converter: the bytes the person copied, as the text they are.
+    }),
+    command({
+        // What the welcome screen's `Open` row promises and what the reference
+        // serves on Ctrl+O (`act/actionExport.tsx:428`): the same open button,
+        // reached from the keyboard. It is declared here rather than on that
+        // row because this table is the only one of shortcuts — which is what
+        // `scripts/check-input-tables.mjs` exists to keep true.
+        id: "openDocument",
+        label: "Open",
+        group: "document",
+        menu: MENUS.canvas,
+        key: { key: "o", mod: true },
     }),
     command({
         id: "insertImage",
@@ -881,6 +894,22 @@ export const COMMANDS = Object.freeze([
         menu: MENUS.element,
         available: (state) => state.fixedText && state.selectionCount === 1,
     }),
+    // The panel's line-editor icon, named for what it means. Upstream reaches
+    // the vertex mode from a double click over the stroke — a Ctrl/Cmd one for
+    // an arrow, a plain one for a line (`App.tsx:6205`); an action says it
+    // outright. It is not `editSelected`'s road: that one is Enter, and Enter
+    // on a line opens a label or finds nothing at the box's centre. The floor
+    // is the double click's own rule read of the selection (`vertex-edit.mjs`
+    // `linearPointsEditable`): a lone line or a lone arrow the kernel does not
+    // bend, because the elbow keeps its segment handling and not the polyline
+    // editor.
+    command({
+        id: "editLinearPoints",
+        label: "Edit the points",
+        group: "edit",
+        menu: MENUS.element,
+        available: (state) => state.linearPoints,
+    }),
     command({
         id: "fontSizeIncrease",
         label: "Increase font size",
@@ -1074,6 +1103,22 @@ export function commandState(session, isViewOnly = () => false, page = NO_PAGE) 
             }
             try {
                 return JSON.parse(session.cropOf(chosen[0])) !== null;
+            } catch {
+                return false;
+            }
+        },
+        // Whether the selection is one element whose vertices the point-editing
+        // verb opens. The rule is the double click's (`vertex-edit.mjs`) without
+        // the pointer: a lone line, or a lone arrow the kernel does not bend.
+        // A session that cannot answer `kindOf` says no, as it does everywhere
+        // the kernel has the word.
+        get linearPoints() {
+            const chosen = selected();
+            if (chosen.length !== 1) {
+                return false;
+            }
+            try {
+                return linearPointsEditable(session, chosen[0]);
             } catch {
                 return false;
             }

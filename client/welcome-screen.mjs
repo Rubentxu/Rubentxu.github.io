@@ -34,12 +34,14 @@
 // # Why the drawings are generated
 //
 // The three hint arrows and the menu rows' icons are the iconary's
-// (`client/chrome-icons.mjs`, generated from the tarball). The logo is the one
-// pair the iconary does not hold — `ExcalidrawLogo.tsx` draws it outside
-// `icons.tsx` — so the generator now writes `WELCOME_LOGO` from the same
-// tarball. Nothing here is a hand-copied SVG.
+// (`client/chrome-icons.mjs`, generated from the manifest). The centre's
+// label is the iconary's second export, `WELCOME_LOGO`: the house's own
+// wordmark since TASK-280 — the 24-grid transit mark and the lettering
+// traced by hand, both carried by the manifest — mounted as a mute drawing,
+// never as live text. Nothing here is a hand-copied SVG.
 
 import { CHROME_ICONS, WELCOME_LOGO } from "./chrome-icons.mjs";
+import { SHORTCUT_COMMANDS } from "./commands.mjs";
 import { spellKey } from "./keys.mjs";
 import { TOOLS } from "./tools.mjs";
 
@@ -96,8 +98,18 @@ const WORDS = Object.freeze({
     helpHint: ["welcomeScreen.helpHint", "Shortcuts & help"],
 });
 
-/** The shortcut the Open row spells, from the same table the tooltips read. */
-const OPEN_SHORTCUT = spellKey({ key: "o", mod: true });
+/**
+ * The shortcut the Open row spells, spelled by the table that owns shortcuts.
+ *
+ * The row is a door to `[data-open-document]`, and the registry is what says
+ * which keys reach that door (`client/commands.mjs`, `openDocument`). Writing
+ * the descriptor here instead would be the second table
+ * `scripts/check-input-tables.mjs` refuses, and the row would keep advertising
+ * a key nobody reads.
+ */
+const OPEN_SHORTCUT = spellKey(
+    SHORTCUT_COMMANDS.find((entry) => entry.id === "openDocument").key,
+);
 
 /**
  * Run a class string through `classList`.
@@ -274,7 +286,13 @@ export function createWelcomeScreen({ document, root, text, onOpen, onHelp, sign
 
     const logo = make(document, "div", "welcome-screen-center__logo excalifont welcome-screen-decor");
     logo.setAttribute("aria-hidden", "true");
-    logo.innerHTML = `<div class="ExcalidrawLogo is-small">${WELCOME_LOGO.icon}${WELCOME_LOGO.text}</div>`;
+    // The label is the house's own wordmark (TASK-280): the mark and the word
+    // bring their own boxes (36×36 and 202×40) and the flex line sets them 12
+    // px apart, so the label measures 250×40 at any viewport. The ink rides
+    // the theme because the drawing is pure stroke. The line lives in the
+    // page's stylesheet (TASK-289), not in an inline attribute: the mount is
+    // only the class and the two drawings.
+    logo.innerHTML = `<div class="nd-wordmark">${WELCOME_LOGO.icon}${WELCOME_LOGO.text}</div>`;
 
     const heading = make(document, "div", "welcome-screen-center__heading welcome-screen-decor excalifont");
     for (const line of ["heading1", "heading2", "heading3"]) {

@@ -41,7 +41,7 @@
 // refusal is the pipeline's to report.
 
 import { GESTURES } from "../gesture.mjs";
-import { FREEDRAW_STREAMLINE, FREEDRAW_VARIABILITY, freedrawJsonFor } from "../tools.mjs";
+import { FREEDRAW_STROKE_WIDTH, FREEDRAW_STREAMLINE, FREEDRAW_VARIABILITY, freedrawJsonFor } from "../tools.mjs";
 
 /**
  * @typedef {{ x: number, y: number }} Point
@@ -131,6 +131,29 @@ class StrokeTravel {
 }
 
 /**
+ * Resolve the press-time style snapshot into the birth style the builder writes.
+ *
+ * One call per gesture, at the press: the line-width token becomes the freehand
+ * table's number here and never again, so the sampling loop and every preview
+ * frame read numbers that already exist (TASK-296 AC6). An absent snapshot is
+ * no style at all — the stroke is born at the kernel's defaults, which is the
+ * road every caller without drawing preferences takes.
+ *
+ * @param {{ strokeColor: string, lineWidth: string, opacity: number } | null} [snapshot]
+ * @returns {{ strokeColor: string, strokeWidth: number, opacity: number } | null}
+ */
+function birthStyle(snapshot) {
+    if (snapshot === null || snapshot === undefined) {
+        return null;
+    }
+    return {
+        strokeColor: snapshot.strokeColor,
+        strokeWidth: FREEDRAW_STROKE_WIDTH[snapshot.lineWidth] ?? FREEDRAW_STROKE_WIDTH.medium,
+        opacity: snapshot.opacity,
+    };
+}
+
+/**
  * Open a stroke at the press.
  *
  * @param {{ beginStroke: (x: number, y: number) => ArrayLike<number> }} session
@@ -139,9 +162,16 @@ class StrokeTravel {
  * @param {{ id: string, seed: number }} identity The element's identity, minted by
  *   the caller at the press: the id the commit will insert under and the seed the
  *   sketch wobbles with. The preview and the commit carry the same two.
+ * @param {object | null} [style] The drawing preferences' snapshot, read ONCE here
+ *   (`snapshot()` on the instance's `stylePreferences`, TASK-296). It is resolved
+ *   into the gesture's birth style at the press and rides every later moment
+ *   unchanged: the trail the user watches, the element the release inserts and
+ *   its undo all carry the same colour, width and opacity. A gesture cancelled
+ *   discards it with itself, and the next press reads the preferences again —
+ *   which is how two consecutive strokes can be two colours.
  * @returns {object} The payload for a new gesture, without its owners.
  */
-export function start(session, startScreen, pointer, identity) {
+export function start(session, startScreen, pointer, identity, style = null) {
     // A pointer that reports the flat 0.5 has no pressure to read: the kernel derives
     // it from the speed of the stroke instead.
     const simulatePressure = pointer.pressure === 0.5;
@@ -160,6 +190,9 @@ export function start(session, startScreen, pointer, identity) {
         simulatePressure,
         variability: FREEDRAW_VARIABILITY,
         streamline: pointer.pointerType === "mouse" ? FREEDRAW_STREAMLINE.mouse : FREEDRAW_STREAMLINE.precise,
+        // Resolved once, at the press: preview and commit read these numbers and
+        // never go back to the preferences.
+        style: birthStyle(style),
     };
 }
 
@@ -231,7 +264,7 @@ export function commit(session, gesture, release, pressure) {
         simulatePressure: gesture.simulatePressure,
         variability: gesture.variability,
         streamline: gesture.streamline,
-    }, { seed: gesture.seed });
+    }, { seed: gesture.seed, style: gesture.style });
     return { id: gesture.id, json };
 }
 
@@ -278,5 +311,5 @@ export function preview(session, gesture) {
         simulatePressure: gesture.simulatePressure,
         variability: gesture.variability,
         streamline: gesture.streamline,
-    }, { seed: gesture.seed });
+    }, { seed: gesture.seed, style: gesture.style });
 }

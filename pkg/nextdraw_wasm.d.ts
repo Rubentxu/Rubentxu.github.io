@@ -1676,6 +1676,24 @@ export class Session {
      */
     selectedVertex(): number | undefined;
     /**
+     * The arrows into and out of `id`, in one answer.
+     *
+     * The same relation the `incoming`/`outgoing` cases of
+     * [`Self::semantic_navigate`] answer with, and nothing else: the core
+     * composes the two, so one crossing asks the whole question a reader of
+     * one element has and no caller can pair an answer from one path with an
+     * answer from the other. The payload is
+     * `{"version":1,"id":…,"outgoing":{"targets":[…],"freeEnd":bool},`
+     * `"incoming":{…}}`, with the free arrow ends named in `freeEnd` and never
+     * turned into targets.
+     *
+     * # Errors
+     *
+     * An empty id, an element the scene does not have or a serialisation
+     * failure names itself `semantic_connections_invalid:`/`_failed:`.
+     */
+    semanticConnections(id: string): string;
+    /**
      * Navigate from `id` by a named relation and answer with the targets.
      *
      * Relations: `next`, `previous`, `parent`, `children`, `incoming`,
@@ -2533,6 +2551,26 @@ export function install_panic_hook(): void;
 export function kernelPanicTag(): string;
 
 /**
+ * The box the kernel's text table gives a body, as the layout that owns it reads it.
+ *
+ * The chart labels used to be measured by the browser's `ctx.measureText`, which made
+ * the painted face the owner of a box the kernel claims as its own — and the day the
+ * family's shipped face changed, the chart's stored widths moved with the font instead
+ * of with the table the receipts are calibrated on. PARITY-057 moved the question here:
+ * the box is `nextdraw_core::measure_text`'s answer, and one face paints what another
+ * face measured is a known, accepted consequence of one owner.
+ *
+ * The answer crosses as JSON, the way [`wire_schema`] and [`document_limits`] do: the
+ * pair is named, not positional, and a reader that had to know which slot was the width
+ * would be a second copy of the shape. The floats survive the round trip bit for bit —
+ * serde writes the shortest representation that parses back to the same `f64`.
+ *
+ * No `Session`: the table is a function of the body and the type settings, and an
+ * argument the answer does not read has no business being asked for.
+ */
+export function measureText(body: string, font_size: number, line_height: number): string;
+
+/**
  * Contract version of the WASM surface, so a stale JS bundle fails loudly rather than
  * reading a changed shape as valid.
  */
@@ -2634,6 +2672,7 @@ export interface InitOutput {
     readonly embeddable_policy: (a: number, b: number, c: number) => void;
     readonly install_panic_hook: () => void;
     readonly kernelPanicTag: (a: number) => void;
+    readonly measureText: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly model_version: () => number;
     readonly panicProbe: () => void;
     readonly point_segment_distance: (a: number, b: number, c: number, d: number, e: number) => void;
@@ -2767,6 +2806,7 @@ export interface InitOutput {
     readonly session_selectableUnitOf: (a: number, b: number, c: number, d: number) => void;
     readonly session_selectedIds: (a: number, b: number) => void;
     readonly session_selectedVertex: (a: number) => number;
+    readonly session_semanticConnections: (a: number, b: number, c: number, d: number) => void;
     readonly session_semanticNavigate: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly session_semanticQuery: (a: number, b: number, c: number, d: number) => void;
     readonly session_semanticSnapshot: (a: number, b: number) => void;

@@ -1,17 +1,27 @@
-// The chart's ruler: the canvas's text metrics, in the shape the layout asks.
+// The chart's ruler: the kernel's text table, in the shape the layout asks.
 //
 // The layout is pure arithmetic on top of one measurement — how wide a piece of
-// text is when the browser draws it in a named family at a named size, and how
-// tall a line of it stands. The reference asks a `RenderEnvironment` for the
-// same answers; this client has the canvas the drawing is painted on, and the
-// paste path already hands it over. The module is the seam between the two: it
-// reads the families the document names, measures on the given context, and
-// restores the context's font so a measurement never leaks into the paint.
+// text is and how tall a line of it stands. That answer belongs to the kernel:
+// the box is a modelled field of the document, and a second owner for it is how
+// they drift. It used to be `ctx.measureText` here, and the day the family's
+// shipped face changed, the chart's stored widths moved with the font instead
+// of with the table the receipts are calibrated on (PARITY-057). The measurer is
+// now the kernel's `measureText`, and the factory asks for no canvas at all: an
+// argument it does not read has no business being taken. The painted face
+// (Kalam) and the measured box (the table's face) knowingly differ; one owner
+// for the box across the product is the decision that bought that.
 
 import { FONT_FAMILIES } from "./vocabulary.mjs";
+import { measureText as kernelMeasureText } from "../pkg/nextdraw_wasm.js";
 
-/** The family a name falls back to when the document names none. */
-const FALLBACK_FAMILY = "Excalifont";
+/**
+ * The family a name falls back to when the document names none.
+ *
+ * It is the name the user sees for the format's default family — the same word the
+ * vocabulary publishes and the stylesheet declares — because a fallback that names a
+ * face this build does not ship would be measured in whatever the system offers.
+ */
+const FALLBACK_FAMILY = "NextDraw Script";
 
 /** The name of every family the document may name, by its number. */
 const FAMILY_NAMES = new Map(FONT_FAMILIES.map(({ id, name }) => [id, name]));
@@ -19,10 +29,11 @@ const FAMILY_NAMES = new Map(FONT_FAMILIES.map(({ id, name }) => [id, name]));
 /**
  * The unitless line height of every family, from the reference's font table.
  *
- * Excalifont, Nunito, Comic Shanns, Virgil and Assistant stand at 1.25;
- * Lilita One, Helvetica and Liberation Sans at 1.15; Cascadia at 1.2. The
- * heights are the reference's, because a chart label's box is half of what the
- * layout decides about it.
+ * The hand-drawn family (the format's `Excalifont`, which this build shows as
+ * `NextDraw Script`), Nunito, Comic Shanns, the classic hand (the format's
+ * `Virgil`) and Assistant stand at 1.25; Lilita One, Helvetica and Liberation Sans
+ * at 1.15; Cascadia at 1.2. The heights are the reference's, because a chart
+ * label's box is half of what the layout decides about it.
  */
 const LINE_HEIGHTS = new Map([
     [1, 1.25],
@@ -63,28 +74,26 @@ function lineHeightOf(fontString) {
  * The measurer the chart layout asks: a font string from a family and a size,
  * the width and height of a text, the narrowest allowed line, and a wrap.
  *
- * @param {CanvasRenderingContext2D} ctx the context the chart will be drawn on.
+ * The width and the height come from the kernel's table, not from the canvas:
+ * `measureText(body, fontSize, lineHeight)` returns the box as a JSON pair, and
+ * the line height is resolved here (from the family's own table) because the
+ * kernel is told the height, not asked to guess it from a face.
+ *
+ * @param {{measureText?: Function}} [options] the oracle, injectable so a unit
+ *   test can hand the layout deterministic metrics without a built artifact.
  * @returns {{fontString: Function, measure: Function, minLineWidth: Function, wrap: Function}}
  *   the four answers the layout needs.
  */
-export function createChartMeasure(ctx) {
+export function createChartMeasure({ measureText = kernelMeasureText } = {}) {
     const fontString = ({ fontFamily, fontSize }) =>
         `${fontSize}px ${FAMILY_NAMES.get(fontFamily) ?? FALLBACK_FAMILY}`;
 
+    /** The kernel's box for a body at the font string's size and the family's height. */
     const measure = (text, font) => {
-        const lines = text.split("\n");
-        ctx.save();
-        ctx.font = font;
-        let width = 0;
-        for (const line of lines) {
-            width = Math.max(width, ctx.measureText(line === "" ? " " : line).width);
-        }
-        ctx.restore();
-        const fontSize = Number.parseFloat(font);
-        return {
-            width,
-            height: fontSize * lineHeightOf(font) * lines.length,
-        };
+        const { width, height } = JSON.parse(
+            measureText(text, Number.parseFloat(font), lineHeightOf(font)),
+        );
+        return { width, height };
     };
 
     const minLineWidth = (font) => {

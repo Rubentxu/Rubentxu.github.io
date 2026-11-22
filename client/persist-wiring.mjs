@@ -105,7 +105,9 @@ export function createPersistence(deps) {
     const imageKeeper = createImageKeeper(createImageStore(options.indexedDB ?? browserIndexedDB()));
 
     const recovery = createRecoveryOffer({
-        download: handOverRecoveredDocument,
+        // The label the save dialog shows is words the user reads, so it rides
+        // on the page's translator.
+        download: (text) => handOverRecoveredDocument(text, { say }),
         clearLive: () => clearDocument(),
     });
 

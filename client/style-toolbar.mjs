@@ -37,6 +37,7 @@
  * module does. `scripts/smoke.test.mjs` does exactly that, against the real artifact.
  */
 import { STYLE_TOKENS } from "./vocabulary.mjs";
+import { createStylePreferences } from "./style-preferences.mjs";
 
 export function datasetProp(attr) {
     return attr.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -106,9 +107,14 @@ export function stylePatch(property, value) {
  * a crossing and a scene lookup per family to light four buttons; four crossings became
  * one, and the count stopped being a property of how many toolbars happen to be bound.
  *
- * `styles` is the parsed object, or `null` for "nothing to show" — an empty selection, or
- * an id that vanished between the last render and this read. Both used to be separate
- * branches here and are now the same value.
+ * `styles` is the parsed object, or `null` when there is no selection — an empty
+ * selection, or an id that vanished between the last render and this read. `null` now
+ * shows the instance's drawing **preference** (`preferences.snapshot()`), the upstream
+ * shape: the row stays lit on the default a click with nothing selected writes.
+ *
+ * A click writes the preference too. With no selection the preference write is all it
+ * does: one O(1) JS store write and this row's DOM refresh, no `setStyle` crossing, no
+ * history entry, no canvas repaint.
  *
  * The click handler still reads the selection itself. That is not the same
  * thing: a click is not a frame, it happens once per human click, and it must
@@ -123,13 +129,46 @@ export function stylePatch(property, value) {
  * not a feature, and silently ignoring it would let the wrong button sit on screen with no
  * feedback.
  */
-export function bindStyleToolbar({ root, style, session, paintFn, onError = (e) => { throw e; }, signal }) {
+export function bindStyleToolbar({ root, style, session, paintFn, preferences = createStylePreferences(), onError = (e) => { throw e; }, signal }) {
     const { attr } = style;
     const prop = datasetProp(attr);
     const buttons = Array.from(root.querySelectorAll(`button[data-${attr}]`));
     const mixedIndicator = Array.from(root.children).find(
         (child) => typeof child.getAttribute === "function" && child.getAttribute("data-style-mixed") !== null,
     ) ?? null;
+    const sync = (styles) => {
+        // With no selection the row shows the instance's preference rather than
+        // hiding: upstream's pickers stay lit on the default, and a row that
+        // vanished the moment the selection did is how a colour "resets" on
+        // tool change in the user's eyes even though nothing was ever written.
+        const shown = styles === null ? preferences.snapshot() : styles;
+        const active = shown[prop];
+        const mixed = active === "mixed";
+        if (mixed) {
+            root.setAttribute("data-mixed", "true");
+        } else {
+            root.removeAttribute("data-mixed");
+        }
+        if (mixedIndicator !== null) {
+            mixedIndicator.hidden = !mixed;
+        }
+        // The kernel's `mixed` token has no matching button, so no button lights. The
+        // row marks that state separately and, where supplied, shows its text indicator.
+        // A preference snapshot never carries `mixed`: a disagreement in the selection
+        // is said on the row and leaves the default alone.
+        for (const button of buttons) {
+            // The zigzag fill lights the hachure button: upstream draws it as
+            // hachure's second state, not as a row of its own.
+            const lit =
+                button.dataset[prop] === active ||
+                (prop === "fill" && button.dataset.fill === "hachure" && active === "zigzag");
+            button.classList.toggle("is-active", lit);
+            // The class is what the eye reads; this is what an assistive
+            // technology reads. Both come from the one comparison, so the
+            // two cannot say different things.
+            button.setAttribute("aria-pressed", lit ? "true" : "false");
+        }
+    };
     for (const button of buttons) {
         // Upstream's fill row carries three buttons and the fourth fill — the
         // zigzag — arrives by Alt-clicking the hachure one (actionProperties.tsx
@@ -140,53 +179,27 @@ export function bindStyleToolbar({ root, style, session, paintFn, onError = (e) 
                 ? "zigzag"
                 : button.dataset[prop];
             const ids = session.selectedIds();
+            if (ids.length === 0) {
+                // Nothing to write: the click chose the default for the next
+                // creation. One JS store write and a DOM refresh of this row —
+                // no crossing, no history entry, no repaint of the canvas.
+                preferences.set(prop, token);
+                sync(preferences.snapshot());
+                return;
+            }
             try {
                 session.setStyle(ids, stylePatch(prop, token));
             } catch (error) {
                 onError(error);
                 return;
             }
+            // The gesture that styled the selection also moves the default to
+            // the same token, upstream's one-write-two-places behaviour.
+            preferences.set(prop, token);
             paintFn();
         }, { signal });
     }
-    return {
-        sync(styles) {
-            // `styles` is the parsed `session.stylesOf()`: one object carrying the first
-            // selected id's token for every family, or `null` for "nothing to show".
-            // The caller reads it once per frame and hands the same object to every
-            // toolbar, so painting four buttons costs one crossing instead of four.
-            const active = styles === null ? null : styles[prop];
-            const mixed = active === "mixed";
-            if (mixed) {
-                root.setAttribute("data-mixed", "true");
-            } else {
-                root.removeAttribute("data-mixed");
-            }
-            if (mixedIndicator !== null) {
-                mixedIndicator.hidden = !mixed;
-            }
-            // The kernel's `mixed` token has no matching button, so no button lights. The
-            // row marks that state separately and, where supplied, shows its text indicator.
-            // A `null` style value remains the distinct answer for a value with no token.
-            // Those two used to be three branches. "Nothing selected" was checked by the
-            // caller with `ids.length > 0` and skipped the read entirely, and "the id
-            // vanished since the last render" was a `catch` around it; both left `active`
-            // at `null`. One read that can fail once has one failure, so the caller now
-            // reports "nothing to show" as a value and this function has one branch left.
-            for (const button of buttons) {
-                // The zigzag fill lights the hachure button: upstream draws it as
-                // hachure's second state, not as a row of its own.
-                const lit =
-                    button.dataset[prop] === active ||
-                    (prop === "fill" && button.dataset.fill === "hachure" && active === "zigzag");
-                button.classList.toggle("is-active", lit);
-                // The class is what the eye reads; this is what an assistive
-                // technology reads. Both come from the one comparison, so the
-                // two cannot say different things.
-                button.setAttribute("aria-pressed", lit ? "true" : "false");
-            }
-        },
-    };
+    return { sync };
 }
 
 /**
@@ -217,41 +230,44 @@ export function bindStyleToolbar({ root, style, session, paintFn, onError = (e) 
  * @param {AbortSignal} [options.signal] when it aborts, the listeners this binder added are removed.
  * @returns {{sync: (styles: object | null) => void}} the per-frame refresher.
  */
-export function bindOpacitySlider({ host, session, paintFn, onError = (e) => { throw e; }, signal }) {
+export function bindOpacitySlider({ host, session, paintFn, preferences = createStylePreferences(), onError = (e) => { throw e; }, signal }) {
     const slider = host.querySelector('input[type="range"]');
     if (!slider) {
         throw new Error("opacity-slider: the host carries no range input");
     }
+    // The readout beside the slider. It is optional: a host without one still works.
+    const readout = host.querySelector("output");
+    const sync = (styles) => {
+        const shown = styles === null ? preferences.snapshot() : styles;
+        if (typeof shown.opacity === "number") {
+            slider.value = String(shown.opacity);
+            if (readout) readout.textContent = String(shown.opacity);
+            host.removeAttribute("data-mixed");
+        } else {
+            // The slider keeps its last position; the readout must not keep its last
+            // number, or it would name a value the selection does not share.
+            if (readout) readout.textContent = "\u2014";
+            host.setAttribute("data-mixed", "true");
+        }
+    };
     slider.addEventListener("input", () => {
+        const value = Number(slider.value);
         const ids = session.selectedIds();
+        if (ids.length === 0) {
+            preferences.set("opacity", value);
+            sync(preferences.snapshot());
+            return;
+        }
         try {
-            session.setStyle(ids, stylePatch("opacity", Number(slider.value)));
+            session.setStyle(ids, stylePatch("opacity", value));
         } catch (error) {
             onError(error);
             return;
         }
+        preferences.set("opacity", value);
         paintFn();
     }, { signal });
-    // The readout beside the slider. It is optional: a host without one still works.
-    const readout = host.querySelector("output");
-    return {
-        sync(styles) {
-            host.hidden = styles === null;
-            if (styles === null) {
-                return;
-            }
-            if (typeof styles.opacity === "number") {
-                slider.value = String(styles.opacity);
-                if (readout) readout.textContent = String(styles.opacity);
-                host.removeAttribute("data-mixed");
-            } else {
-                // The slider keeps its last position; the readout must not keep its last
-                // number, or it would name a value the selection does not share.
-                if (readout) readout.textContent = "\u2014";
-                host.setAttribute("data-mixed", "true");
-            }
-        },
-    };
+    return { sync };
 }
 
 /**
@@ -285,7 +301,7 @@ export const OPACITY_ROW_ID = "opacity-row";
  * @param {AbortSignal} [options.signal] when it aborts, the listeners this binder added are removed.
  * @returns {{sync: (styles: object | null) => void}}
  */
-export function bindStyleToolbars({ document, session, paintFn, onError, signal }) {
+export function bindStyleToolbars({ document, session, paintFn, preferences = createStylePreferences(), onError, signal }) {
     const syncs = [];
     for (const [key, style] of Object.entries(STYLES)) {
         const id = STYLE_ROOT_IDS[key];
@@ -293,13 +309,13 @@ export function bindStyleToolbars({ document, session, paintFn, onError, signal 
         if (!root) {
             throw new Error(`style-toolbars: no element #${id} for the ${key} row`);
         }
-        syncs.push(bindStyleToolbar({ root, style, session, paintFn, onError, signal }).sync);
+        syncs.push(bindStyleToolbar({ root, style, session, paintFn, preferences, onError, signal }).sync);
     }
     const host = document.getElementById(OPACITY_ROW_ID);
     if (!host) {
         throw new Error(`style-toolbars: no element #${OPACITY_ROW_ID} for the opacity row`);
     }
-    syncs.push(bindOpacitySlider({ host, session, paintFn, onError, signal }).sync);
+    syncs.push(bindOpacitySlider({ host, session, paintFn, preferences, onError, signal }).sync);
     return {
         sync(styles) {
             for (const sync of syncs) sync(styles);

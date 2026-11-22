@@ -19,7 +19,7 @@ export const MODE_NOTICES = Object.freeze({
     "notice.midpoint.on": "Midpoint markers on. Choose Midpoint snapping again to turn them off.",
     "notice.midpoint.off": "Midpoint markers off.",
     "notice.vertex-delete.edit-mode": "The edit mode is on: pick a vertex and press Supr to take it out.",
-    "notice.save.done": "Saved as nextdraw.excalidraw.",
+    "notice.save.done": "Saved as nextdraw.nextdraw.",
     "notice.recover.done": "Recovered a drawing that could not be opened.",
     "notice.recover.offered": "The drawing was put aside and offered as a file. The copy is kept here.",
     "notice.recover.retry":

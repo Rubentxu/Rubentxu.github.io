@@ -40,7 +40,7 @@ import { CHROME_ICONS } from "./chrome-icons.mjs";
 import { createLibraryStore } from "./library-store.mjs";
 import { browserIndexedDB, createImageStore } from "./image-store.mjs";
 import { askLink } from "./link-dialog.mjs";
-import { deleteTarget } from "./vertex-edit.mjs";
+import { deleteTarget, linearPointsEditable } from "./vertex-edit.mjs";
 import { isRefusal } from "./gesture-pipeline.mjs";
 
 /** The iconary's drawing for a name, as a node the library sidebar can wear. */
@@ -564,6 +564,10 @@ export function createCommandRunner(deps) {
                 // own editor), so the verb hands it the same event instead of
                 // keeping a second copy of the decision. The point is the
                 // selected element's centre, in the canvas's own coordinates.
+                // The linear element's editor is no longer met here: the panel
+                // says what it means with `editLinearPoints`, because a forged
+                // centre is neither the stroke the double click asks for nor
+                // the label a plain one would open.
                 if (canvas === null) {
                     return;
                 }
@@ -587,10 +591,49 @@ export function createCommandRunner(deps) {
                 }
                 return;
             }
+            case "editLinearPoints": {
+                // The semantic verb for the vertices: it asks the selection, not
+                // the pointer. One `beginEditing(id)` opens the same mode the
+                // Ctrl/Cmd double click reaches (`text-editor-wiring.mjs`), and
+                // nothing is dispatched — the centre of the bounds is no place
+                // on the stroke, and an arrow reads a plain double click there
+                // as a label. The floor is the double click's own rule without
+                // the hit test: a lone line, or a lone arrow the kernel does not
+                // bend; the elbow keeps its segment handling. The kernel holds
+                // the last word — locked, absent and vertexless elements answer
+                // `false` — so the mode opens or it does not, and the frame is
+                // painted only when it did.
+                const ids = session.selectedIds();
+                if (ids.length !== 1) {
+                    return;
+                }
+                let editable = false;
+                try {
+                    editable = linearPointsEditable(session, ids[0]);
+                } catch {
+                    return;
+                }
+                if (!editable) {
+                    return;
+                }
+                if (session.beginEditing(ids[0])) {
+                    paint(session, ctx);
+                }
+                return;
+            }
             case "insertImage": {
                 // The import button owns the file picker and the door the bytes
                 // land through; the verb is the keyboard's way to that button.
                 document.querySelector("button[data-import]")?.click();
+                return;
+            }
+            case "openDocument": {
+                // The same door the canvas menu's `Open` row and the welcome
+                // screen's row open: `[data-open-document]`, whose binder owns
+                // the file picker and the kernel's fence on the bytes it reads
+                // (`client/document-io-wiring.mjs`). A verb cannot do one thing
+                // from the keyboard and another from the menu.
+                document.querySelector("button[data-open-document]")?.click();
                 return;
             }
             case "agentTools": {

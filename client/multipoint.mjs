@@ -83,14 +83,20 @@ export const LINE_CONFIRM_THRESHOLD = 8;
  * @param {string | undefined} arrowType The shape an arrow takes, when the tool is the arrow.
  * @param {{x: number, y: number}} origin Scene point of the first vertex.
  * @param {number} zoom The zoom the drawing is drawn at.
+ * @param {object | null} [style] The birth style of the press that opened the mode
+ *   (TASK-295): the element is styled at the point of the release's `linearJsonFor`, and it
+ *   is styled with the style the pointer carried when it went down, not with whatever the
+ *   pickers hold by the time the last corner was clicked. The mode spreads its state
+ *   everywhere, so the frozen object rides every click of the drawing unchanged.
  * @returns {object} The mode's state.
  */
-export function begin(tool, arrowType, origin, zoom) {
+export function begin(tool, arrowType, origin, zoom, style = null) {
     return {
         tool,
         arrowType,
         origin,
         zoom,
+        style,
         points: [
             [0, 0],
             [0, 0],

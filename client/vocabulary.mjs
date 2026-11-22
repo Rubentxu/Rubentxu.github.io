@@ -36,7 +36,7 @@ export const VOCABULARY = {
     "fontFamilies": [
         {
             "id": 1,
-            "name": "Virgil"
+            "name": "NextDraw Hand"
         },
         {
             "id": 2,
@@ -48,7 +48,7 @@ export const VOCABULARY = {
         },
         {
             "id": 5,
-            "name": "Excalifont"
+            "name": "NextDraw Script"
         },
         {
             "id": 6,
